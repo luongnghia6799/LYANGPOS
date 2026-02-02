@@ -1,0 +1,24 @@
+==========================================
+        HUONG DAN SU DUNG Sáu Quý POS
+==========================================
+
+1. SU DUNG PHIEN BAN MOI (NON-PORTABLE / ONEDIR):
+   - Vào thư mục 'dist/LyangPOS'.
+   - Chay file 'LyangPOS.exe' trong thư mục đó.
+   - Ứng dụng sẽ khởi động nhanh hơn và ổn định hơn.
+
+2. COPY SANG MAY KHAC:
+   - Bạn cần copy CA THU MỤC 'LyangPOS' (trong dist) sang máy khác.
+   - KHÔNG ĐƯỢC chỉ copy file exe, vì nó cần thư mục '_internal' đi kèm.
+   - Chạy 'LyangPOS.exe' như bình thường.
+   - Vẫn không cần cài Python.
+
+3. TRUONG HOP E LUU Y:
+   - Neu file .exe gap loi, ban co the chay theo cach thu cong:
+     a. Cai dat Python 3.x tren may moi.
+     b. Chay file 'install.bat' de cai dat cac thu vien can thiet.
+     c. Chay file 'run.bat' de mo ung dung.
+
+4. LUU Y VE DU LIEU:
+   - Du lieu duoc luu trong file 'backend/instance/easypos.db' hoac 'backend/easypos.db'.
+   - Hay thuong xuyen sao luu file nay de tranh mat du lieu.

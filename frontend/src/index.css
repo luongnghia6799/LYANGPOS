@@ -1,0 +1,796 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--primary-color);
+  --color-primary-hover: var(--primary-hover);
+  --color-app-bg: var(--bg-color);
+  --font-sans: "Be Vietnam Pro", "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+:root {
+  --primary-color: #2d5016;
+  --primary-hover: #1e3a0f;
+  --bg-color: #faf8f3;
+  --text-main: #2d5016;
+  --text-muted: #8b6f47;
+  --border-color: rgba(139, 111, 71, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme='agri'] {
+  --primary-color: #2d5016;
+  --primary-hover: #1e3a0f;
+  --bg-color: #faf8f3;
+  --text-main: #2d5016;
+  --text-muted: #8b6f47;
+  --border-color: rgba(139, 111, 71, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  /* Agriculture specific */
+  --secondary-color: #8b6f47;
+  --accent-color: #d4a574;
+  --accent-bright: #f4c430;
+  --earth-brown: #6b4423;
+  --leaf-green: #4a7c59;
+  --top-nav-gradient: linear-gradient(180deg, rgba(45, 80, 22, 0.95) 0%, rgba(30, 58, 15, 0.98) 50%, rgba(107, 68, 35, 0.95) 100%);
+  --button-gradient: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
+  --main-gradient: linear-gradient(135deg, #faf8f3 0%, #f5f1e8 30%, #ede8dc 60%, #e8e3d5 100%);
+  --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 248, 243, 0.8) 100%);
+  --dropdown-shadow: 0 10px 40px -10px rgba(45, 80, 22, 0.3);
+}
+
+.dark[data-theme='agri'] {
+  --bg-color: #050804;
+  --text-main: #dcfce7;
+  --text-muted: #d4a574;
+  --border-color: rgba(212, 165, 116, 0.2);
+  --card-bg: rgba(5, 12, 5, 0.85);
+  --top-nav-gradient: linear-gradient(180deg, #051a05 0%, #020802 100%);
+  --main-gradient: linear-gradient(180deg, #0a1f0a 0%, #050804 100%);
+  --primary-color: #4ade80;
+  --primary-hover: #22c55e;
+}
+
+[data-theme='luxury'] {
+  --primary-color: #8B5A2B;
+  /* Leather Brown */
+  --primary-hover: #6B4226;
+  /* Darker Leather */
+  --bg-color: #FDFBF7;
+  /* Warm White/Paper */
+  --text-main: #3E2723;
+  /* Deep Brown */
+  --text-muted: #8D6E63;
+  /* Muted Brown */
+  --border-color: rgba(139, 90, 43, 0.4);
+  /* Brown border */
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --secondary-color: #8D6E63;
+  --accent-color: #A1887F;
+  --accent-bright: #D7CCC8;
+  --earth-brown: #3E2723;
+  --leaf-green: #5D5D5D;
+  --top-nav-gradient: linear-gradient(160deg, #3E2723 0%, #4E342E 60%, #291E19 100%);
+  /* Deep Coffee */
+  --button-gradient: linear-gradient(135deg, #8B5A2B 0%, #A1887F 100%);
+  --main-gradient: linear-gradient(135deg, #FDFBF7 0%, #F5F1E8 100%);
+  --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(253, 251, 247, 0.95) 100%);
+  --dropdown-shadow: 0 15px 50px -10px rgba(139, 90, 43, 0.3);
+}
+
+.dark[data-theme='luxury'] {
+  --bg-color: #1A1614;
+  /* Dark Coffee Bean */
+  --text-main: #EFEBE9;
+  /* Off white */
+  --text-muted: #BCAAA4;
+  /* Light Brown */
+  --border-color: rgba(161, 136, 127, 0.3);
+  --card-bg: rgba(43, 35, 32, 0.9);
+  --top-nav-gradient: linear-gradient(180deg, #120E0C 0%, #26201D 100%);
+  --main-gradient: linear-gradient(180deg, #1A1614 0%, #0D0B0A 100%);
+  --primary-color: #BCAAA4;
+  /* Light Brown for contrast */
+  --primary-hover: #D7CCC8;
+}
+
+
+
+
+/* Theme Specific Patterns */
+[data-theme='agri'] .main-content-bg {
+  background-color: var(--bg-color);
+  /* removed patterns in dark mode */
+}
+
+.dark[data-theme='agri'] .main-content-bg {
+  background-image: none !important;
+}
+
+[data-theme='luxury'] .main-content-bg {
+  background-color: var(--bg-color);
+  background-image: radial-gradient(circle at 2px 2px, rgba(166, 124, 0, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark[data-theme='luxury'] .main-content-bg {
+  background-image: none !important;
+}
+
+.glass-card {
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+}
+
+
+
+
+.main-content-bg {
+  background: var(--main-gradient) !important;
+  transition: background-color 0.5s ease, background-image 0.5s ease;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.glass-table {
+  @apply rounded-2xl;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--border-color) !important;
+  overflow: visible !important;
+  /* subtle inner shadow to stabilize edges in dark mode */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+
+.btn-glow {
+  @apply relative overflow-hidden transition-all duration-300;
+}
+
+.btn-glow:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+[data-theme='agri'] .btn-glow:hover {
+  box-shadow:
+    0 8px 24px rgba(212, 165, 116, 0.35),
+    0 0 20px rgba(244, 196, 48, 0.25);
+}
+
+[data-theme='default'] .btn-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+[data-theme='vintage'] .btn-glow:hover {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+}
+
+.glow-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 25px var(--primary-color) !important;
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.glow-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 25px var(--primary-color) !important;
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.dropdown-premium {
+  @apply absolute top-full left-0 right-0 rounded-2xl mt-2 z-[100] border-2 backdrop-blur-xl overflow-hidden;
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+
+.dropdown-item {
+  @apply p-3 cursor-pointer transition-all duration-200 border-b border-[#d4a574]/10 last:border-0 relative overflow-hidden;
+}
+
+.dropdown-item:hover,
+.dropdown-item.active {
+  background: var(--button-gradient) !important;
+  color: white !important;
+  padding-left: 1.5rem !important;
+}
+
+.dropdown-item:hover::before,
+.dropdown-item.active::before {
+  content: '';
+  @apply absolute left-0 top-0 bottom-0 w-1 bg-[#f4c430];
+  box-shadow: 2px 0 8px rgba(244, 196, 48, 0.4);
+}
+
+.dropdown-item:hover div,
+.dropdown-item:hover span,
+.dropdown-item:hover p,
+.dropdown-item.active div,
+.dropdown-item.active span,
+.dropdown-item.active p {
+  color: white !important;
+}
+
+.input-premium {
+  @apply w-full bg-white/80 dark:bg-slate-950/80 border-2 border-transparent rounded-2xl px-4 py-3 outline-none transition-all duration-300;
+}
+
+.input-premium:focus {
+  @apply border-primary bg-white dark:bg-slate-950;
+  box-shadow: 0 0 20px -5px var(--primary-color);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  transition-property: color, background-color, border-color;
+  transition-duration: 300ms;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Styled Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-700 rounded-full border-2 border-transparent bg-clip-padding hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors;
+}
+
+/* True Dark Mode implementation */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+}
+
+.dark .main-content-bg {
+  background: var(--main-gradient) !important;
+}
+
+.dark .glass-panel {
+  background: var(--card-bg) !important;
+  backdrop-filter: none !important;
+  /* disable blur in dark mode to fix streaks */
+  border: 1px solid var(--border-color) !important;
+}
+
+.dark .glass-table {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid var(--border-color) !important;
+  backdrop-filter: none !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.dark input:focus,
+.dark textarea:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 15px var(--primary-color) !important;
+}
+
+.dark .text-gray-900,
+.dark .text-slate-900 {
+  color: var(--text-main) !important;
+}
+
+.dark .text-gray-400,
+.dark .text-slate-400 {
+  color: var(--text-muted) !important;
+}
+
+.dark .bg-white,
+.dark .bg-slate-50,
+.dark .bg-gray-50 {
+  background-color: var(--card-bg) !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-slate-200,
+.dark .border-slate-800 {
+  border-color: var(--border-color) !important;
+}
+
+/* Top Nav Specific for Dark Mode */
+.dark .top-nav-gradient {
+  background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%) !important;
+}
+
+/* Target transitions specifically to avoid performance issues */
+a,
+button,
+input,
+select,
+textarea,
+.transition-premium {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-duration: 400ms;
+}
+
+.top-nav-gradient {
+  /* No global transition to avoid conflict with Framer Motion layout animations */
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+
+  /* Force all direct parents to allow expansion */
+  html,
+  body,
+  #root,
+  #root>div,
+  main,
+  .main-content,
+  div[class*="h-screen"],
+  div[class*="overflow-hidden"],
+  div[class*="overflow-y-auto"] {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    float: none !important;
+    position: static !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    background: white !important;
+    visibility: visible !important;
+  }
+
+  /* Hide UI elements that shouldn't be printed */
+  .no-print,
+  nav,
+  header,
+  footer,
+  .top-nav-gradient,
+  .main-nav,
+  button:not(.only-print *),
+  .print-hidden,
+  .no-print * {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  .only-print {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  #print-template {
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    page-break-after: auto !important;
+    page-break-before: auto !important;
+    page-break-inside: auto !important;
+    background: white !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Ensure tables can break across pages */
+  table {
+    page-break-inside: auto !important;
+    width: 100% !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+}
+
+.only-print {
+  display: none;
+}
+
+@keyframes bounce-subtle {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* Agricultural Theme Animations */
+@keyframes leaf-sway {
+
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes wheat-wave {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  25% {
+    transform: translateY(-3px) rotate(1deg);
+  }
+
+  75% {
+    transform: translateY(3px) rotate(-1deg);
+  }
+}
+
+@keyframes grow-sprout {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
+/* removed soil-pulse */
+
+[data-theme='agri'] .animate-leaf-sway {
+  animation: leaf-sway 3s ease-in-out infinite;
+}
+
+[data-theme='agri'] .animate-wheat-wave {
+  animation: wheat-wave 4s ease-in-out infinite;
+}
+
+[data-theme='agri'] .animate-grow {
+  animation: grow-sprout 2.5s ease-in-out infinite;
+}
+
+/* removed animate-soil-pulse */
+
+/* New UI Enhancements */
+.top-nav-gradient {
+  background: var(--top-nav-gradient) !important;
+}
+
+.btn-gradient {
+  background: var(--button-gradient) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.total-highlight {
+  @apply ring-4 ring-offset-2 ring-primary bg-primary text-white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.card-enhanced {
+  @apply shadow-xl border-t-4 border-primary;
+}
+
+/* Premium Esc Effects */
+@keyframes esc-ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes esc-shockwave {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(10);
+    opacity: 0;
+  }
+}
+
+.esc-indicator {
+  @apply fixed top-6 right-6 z-[9999] pointer-events-none flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 text-white font-black uppercase text-xs tracking-widest shadow-2xl;
+  animation: esc-ripple 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.esc-shockwave-circle {
+  @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border-4 border-emerald-500/30 z-[9998] pointer-events-none;
+  animation: esc-shockwave 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+/* Modern Pulse & Shimmer Effects */
+@keyframes shimmer-modern {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-modern {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.005);
+  }
+}
+
+.animate-shimmer-fast {
+  @apply relative overflow-hidden;
+}
+
+.animate-shimmer-fast::after {
+  content: "";
+  @apply absolute inset-0;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent);
+  transform: translateX(-100%);
+  animation: shimmer-modern 1.5s infinite;
+}
+
+.dark .animate-shimmer-fast::after {
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent);
+}
+
+.animate-pulse-smooth {
+  animation: pulse-modern 3s ease-in-out infinite;
+}
+
+/* Skeleton Screens */
+.skeleton {
+  @apply bg-slate-200/50 dark:bg-slate-800/50 rounded-lg animate-pulse;
+}
+
+.skeleton-shimmer {
+  @apply relative overflow-hidden bg-slate-100 dark:bg-slate-900;
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  @apply absolute inset-0;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent);
+  transform: translateX(-100%);
+  animation: shimmer-modern 2s infinite;
+}
+
+.dark .skeleton-shimmer::after {
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent);
+}
+
+/* Stagger transition concepts */
+.stagger-in>* {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: slide-up-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes slide-up-fade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-in>*:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stagger-in>*:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.stagger-in>*:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.stagger-in>*:nth-child(4) {
+  animation-delay: 0.25s;
+}
+
+.stagger-in>*:nth-child(5) {
+  animation-delay: 0.3s;
+}
+
+/* Premium Rainbow Border Effect - Refined */
+@keyframes rainbow-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.premium-rainbow-border {
+  position: relative;
+  padding: 3px;
+  border-radius: 2.7rem;
+  background: linear-gradient(90deg,
+      #ff3d00, #ffeb3b, #4caf50, #00bcd4, #2196f3, #9c27b0, #e91e63, #ff3d00);
+  background-size: 300% 300%;
+  animation: rainbow-flow 6s ease infinite;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background-origin: border-box;
+  background-clip: border-box;
+}
+
+.premium-rainbow-border:hover {
+  box-shadow: 0 15px 50px -5px rgba(0, 0, 0, 0.25);
+  padding: 4px;
+}
+
+/* Ensure inner content matches perfectly */
+.premium-rainbow-border>div {
+  border-radius: calc(2.7rem - 3px) !important;
+  overflow: hidden;
+}
+
+/* Fix for sticky headers in rounded containers */
+.premium-rainbow-border thead {
+  border-top-left-radius: calc(2.7rem - 3px);
+  border-top-right-radius: calc(2.7rem - 3px);
+}
