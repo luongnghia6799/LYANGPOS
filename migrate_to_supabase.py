@@ -43,6 +43,39 @@ try:
     pg_conn = psycopg2.connect(pg_url)
     pg_cur = pg_conn.cursor()
     
+    # --- CLEAN SLATE OPTION ---
+    print("\n[?] Do you want to WIPE all existing data on Cloud before migrating? (Clean Slate)")
+    print("    This fixes specific ID conflicts and ensures a clean import.")
+    wipe = input("    Type 'DELETE' to confirm wipe, or Enter to skip: ").strip()
+    
+    if wipe == 'DELETE':
+        print("\n[!] Wiping Cloud Database...", end=" ", flush=True)
+        # Use TRUNCATE CASCADE to remove data and all dependent children
+        # We exclude 'user' table to prevent locking ourselves out, unless logic dictates otherwise
+        # But 'user' data is in SQLite too. Let's wipe everything except maybe User if ID conflict?
+        # Actually, let's wipe BUSINESS data.
+        
+        tables_to_wipe = [
+            '"order"', 'order_detail', 'cash_voucher', 'bank_transaction',
+            'customer_price', 'combo_item', 'voice_alias', 
+            'product', 'partner', 'bank_account', 'print_template', 'app_setting'
+        ]
+        
+        # We can do one big TRUNCATE with CASCADE
+        # Note: "user" table is risky. If we wipe it, we must ensure SQLite has users.
+        # Let's wipe everything to be safe for a full restore.
+        # Including "user" but be careful.
+        
+        all_tables = ", ".join(tables_to_wipe) + ', "user"'
+        try:
+            pg_cur.execute(f"TRUNCATE TABLE {all_tables} RESTART IDENTITY CASCADE;")
+            pg_conn.commit()
+            print("Done! (All clean)")
+        except Exception as e:
+            pg_conn.rollback()
+            print(f"Failed to wipe: {e}")
+            print("Continuing with merge attempt...")
+
     # 3. Migration Wrapper
     def migrate_table(table_name, columns, conflict_col='id', table_quoted=None, bool_cols=None):
         target_table = table_quoted if table_quoted else table_name

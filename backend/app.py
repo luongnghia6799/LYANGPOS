@@ -2898,16 +2898,47 @@ def reset_database():
         return jsonify({'error': 'Sai mật khẩu!'}), 403
         
     try:
-        # Delete in order of dependencies (Details first)
-        OrderDetail.query.delete()
-        Order.query.delete()
-        CashVoucher.query.delete()
-        CustomerPrice.query.delete()
-        ComboItem.query.delete()
-        Product.query.delete()
-        Partner.query.delete()
-        
-        db.session.commit()
+    try:
+        # Detect database dialect
+        if db.engine.dialect.name == 'postgresql':
+            # Postgres: Use TRUNCATE CASCADE for clean and fast wipe
+            # We exclude 'user' and 'app_setting' to keep login and config
+            # But include all business data tables
+            tables = [
+                '"order"', 'order_detail', 'cash_voucher', 'bank_transaction',
+                'customer_price', 'combo_item', 'voice_alias',
+                'product', 'partner', 'bank_account', 'print_template'
+            ]
+            
+            # Construct TRUNCATE statement
+            stmt = f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE;"
+            db.session.execute(db.text(stmt))
+            db.session.commit()
+            
+        else:
+            # SQLite: Delete in strict reverse dependency order
+            # 1. Transactions & Vouchers (depend on Order/Partner/Account)
+            BankTransaction.query.delete()
+            CashVoucher.query.delete()
+            
+            # 2. Details (depend on Order/Product)
+            OrderDetail.query.delete()
+            
+            # 3. Orders (depend on Partner)
+            Order.query.delete()
+            
+            # 4. Product dependencies
+            ComboItem.query.delete()
+            VoiceAlias.query.delete()
+            CustomerPrice.query.delete()
+            
+            # 5. Core Entities
+            Product.query.delete()
+            Partner.query.delete()
+            BankAccount.query.delete()
+            PrintTemplate.query.delete()
+            
+            db.session.commit()
         return jsonify({'message': 'Đã xóa toàn bộ dữ liệu thành công!'})
     except Exception as e:
         db.session.rollback()
