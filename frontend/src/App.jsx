@@ -10,7 +10,6 @@ import LoadingOverlay from './components/LoadingOverlay';
 // Lazy load pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const POS = lazy(() => import('./pages/POS'));
-const VoicePOS = lazy(() => import('./pages/VoicePOS'));
 const Purchase = lazy(() => import('./pages/Purchase'));
 const History = lazy(() => import('./pages/History'));
 const CashVoucher = lazy(() => import('./pages/CashVoucher'));
@@ -41,7 +40,6 @@ const AppLayout = () => {
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<PageWrapper><Dashboard /></PageWrapper>} />
-              <Route path="/voice-sales" element={<PageWrapper><VoicePOS /></PageWrapper>} />
               <Route path="/pos" element={<PageWrapper><POS /></PageWrapper>} />
               <Route path="/purchase" element={<PageWrapper><Purchase /></PageWrapper>} />
               <Route path="/history" element={<PageWrapper><History /></PageWrapper>} />
@@ -74,14 +72,7 @@ const Heartbeat = () => {
   return null;
 };
 
-import { VoiceService } from './lib/voiceService';
-
 function App() {
-  useEffect(() => {
-    // Sync voice aliases on startup
-    VoiceService.syncAliases();
-  }, []);
-
   return (
     <LazyMotion features={domMax} strict>
 

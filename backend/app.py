@@ -1,5 +1,6 @@
 import os
 import ctypes
+import sqlite3
 
 # import openpyxl # Lazy import
 # from openpyxl import Workbook
@@ -11,7 +12,7 @@ import webbrowser
 import json
 from flask import Flask, request, jsonify, send_file, send_from_directory, redirect
 from flask_cors import CORS
-from models import db, Product, Partner, Order, OrderDetail, CashVoucher, CustomerPrice, AppSetting, ComboItem, PrintTemplate, User, BankAccount, BankTransaction, VoiceAlias
+from models import db, Product, Partner, Order, OrderDetail, CashVoucher, CustomerPrice, AppSetting, ComboItem, PrintTemplate, User, BankAccount, BankTransaction
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from datetime import datetime
@@ -651,27 +652,7 @@ def get_product_brands():
     brand_list = sorted([b[0] for b in brands if b[0]])
     return jsonify(brand_list)
 
-@app.route('/api/voice-aliases', methods=['GET'])
-def get_voice_aliases():
-    try:
-        aliases = VoiceAlias.query.all()
-        return jsonify([a.to_dict() for a in aliases])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
 
-@app.route('/api/voice-aliases', methods=['POST'])
-def add_voice_alias():
-    data = request.json
-    if not data or 'product_id' not in data or 'alias_name' not in data:
-        return jsonify({'error': 'Missing data'}), 400
-    
-    alias = VoiceAlias(
-        product_id=data['product_id'],
-        alias_name=data['alias_name'].lower().strip()
-    )
-    db.session.add(alias)
-    db.session.commit()
-    return jsonify(alias.to_dict()), 201
 
 @app.route('/api/products/bulk-delete', methods=['POST'])
 def bulk_delete_products():
@@ -2868,20 +2849,112 @@ def restore_backup():
         return jsonify({'error': 'No selected file'}), 400
     
     try:
-        db_path = get_storage_path(os.path.join("instance", "easypos.db"))
+        if db.engine.dialect.name == 'postgresql':
+            # PostgreSQL Restore Logic
+            temp_dir = get_storage_path(os.path.join("uploads", "temp"))
+            os.makedirs(temp_dir, exist_ok=True)
+            temp_db_path = os.path.join(temp_dir, "temp_restore.db")
+            file.save(temp_db_path)
+            
+            conn = sqlite3.connect(temp_db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            # 1. Truncate all tables
+            tables = [
+                '"order"', 'order_detail', 'cash_voucher', 'bank_transaction',
+                'customer_price', 'combo_item',
+                'product', 'partner', 'bank_account', 'print_template', 'app_setting'
+            ]
+            stmt = f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE;"
+            db.session.execute(db.text(stmt))
+            
+            # 2. Import Data
+            def import_table(sqlite_table, model):
+                try:
+                    # Check table existence in SQLite
+                    safe_table_name = f'"{sqlite_table}"'
+                    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND lower(name)=lower('{sqlite_table}');")
+                    if not cursor.fetchone():
+                        return
+
+                    cursor.execute(f"SELECT * FROM {safe_table_name}")
+                    rows = cursor.fetchall()
+                    
+                    mapper = inspect(model)
+                    model_cols = [c.key for c in mapper.attrs]
+                    
+                    for row in rows:
+                        data = dict(row)
+                        valid_data = {k: v for k, v in data.items() if k in model_cols}
+                        db.session.add(model(**valid_data))
+                    
+                    db.session.flush()
+                except Exception as ex:
+                    app.logger.error(f"Error importing {sqlite_table}: {ex}")
+                    raise ex
+
+            import_table('app_setting', AppSetting)
+            import_table('bank_account', BankAccount)
+            import_table('partner', Partner)
+            import_table('product', Product)
+            import_table('print_template', PrintTemplate)
+            import_table('order', Order)
+            import_table('order_detail', OrderDetail)
+            import_table('combo_item', ComboItem)
+            import_table('customer_price', CustomerPrice)
+            import_table('cash_voucher', CashVoucher)
+            import_table('bank_transaction', BankTransaction)
+            
+            # 3. Reset Sequences
+            def reset_seq(table, seq_name=None):
+                safe_table = f'"{table}"'
+                try:
+                    # Get sequence name automatically if possible, or use standard naming convention
+                    # Supabase/Postgres usually: table_id_seq
+                    seq = seq_name or f"{table}_id_seq"
+                    # For 'order', it is order_id_seq
+                    
+                    query = f"SELECT setval('{seq}', COALESCE((SELECT MAX(id) FROM {safe_table}), 0) + 1, false);"
+                    db.session.execute(db.text(query))
+                except Exception as ex:
+                    app.logger.warning(f"Seq reset warning for {table}: {ex}")
+            
+            reset_seq('app_setting')
+            reset_seq('bank_account')
+            reset_seq('partner')
+            reset_seq('product')
+            reset_seq('print_template')
+            reset_seq('order', '"order_id_seq"') # Special quoting for order seq maybe? 
+            # Actually standard naming is order_id_seq, but since order is keyword...
+            # pg_get_serial_sequence is safer but tricky with quotes in sqlalchemy text()
+            # Let's try explicit pg_get_serial_sequence approach
+            
+            for t in ['order_detail', 'combo_item', 'customer_price', 'cash_voucher', 'bank_transaction']:
+                reset_seq(t)
+                
+            # Retry Order sequence robustly
+            try:
+                db.session.execute(db.text("SELECT setval(pg_get_serial_sequence('\"order\"', 'id'), COALESCE(MAX(id), 0) + 1, false) FROM \"order\";"))
+            except: pass
+
+
+            db.session.commit()
+            conn.close()
+            if os.path.exists(temp_db_path):
+                os.remove(temp_db_path)
+
+        else:
+            # SQLite Mode
+            db_path = get_storage_path(os.path.join("instance", "easypos.db"))
+            db.session.remove()
+            db.engine.dispose()
+            file.save(db_path)
+            run_migrations()
         
-        # Close all connections
-        db.session.remove()
-        db.engine.dispose()
-        
-        # Save uploaded file over existing db
-        file.save(db_path)
-        
-        # Run migrations on the restored database
-        run_migrations()
-        
-        return jsonify({'message': 'Dữ liệu đã được khôi phục thành công! Hãy khởi động lại ứng dụng để đảm bảo ổn định nhất.'})
+        return jsonify({'message': 'Dữ liệu đã được khôi phục thành công! Hãy khởi động lại ứng dụng.'})
     except Exception as e:
+        db.session.rollback()
         app.logger.error(f"Error restoring backup: {e}")
         return jsonify({'error': str(e)}), 500
 
@@ -2905,7 +2978,7 @@ def reset_database():
             # But include all business data tables
             tables = [
                 '"order"', 'order_detail', 'cash_voucher', 'bank_transaction',
-                'customer_price', 'combo_item', 'voice_alias',
+                'customer_price', 'combo_item',
                 'product', 'partner', 'bank_account', 'print_template'
             ]
             
@@ -2928,7 +3001,7 @@ def reset_database():
             
             # 4. Product dependencies
             ComboItem.query.delete()
-            VoiceAlias.query.delete()
+
             CustomerPrice.query.delete()
             
             # 5. Core Entities

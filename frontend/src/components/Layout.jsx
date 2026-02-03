@@ -26,8 +26,7 @@ import {
     Home,
     BookOpen,
     Power,
-    Landmark,
-    Mic
+    Landmark
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -85,7 +84,6 @@ export default function Layout({ children }) {
 
     const MENU_ITEMS = [
         { icon: Home, label: "Tổng quan", path: "/" },
-        { icon: Mic, label: "Bán hàng giọng nói", path: "/voice-sales" },
         { icon: Wheat, label: "Bán hàng (POS)", path: "/pos" },
         { icon: Truck, label: "Nhập hàng", path: "/purchase" },
         { icon: HistoryIcon, label: "Lịch sử", path: "/history" },

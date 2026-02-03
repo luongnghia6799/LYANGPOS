@@ -87,20 +87,7 @@ class ComboItem(db.Model):
             'quantity': self.quantity
         }
 
-class VoiceAlias(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    alias_name = db.Column(db.String(200), nullable=False, index=True)
 
-    product = db.relationship('Product', backref=db.backref('aliases', cascade='all, delete-orphan'))
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'product_id': self.product_id,
-            'alias_name': self.alias_name,
-            'product_name': self.product.name if self.product else ''
-        }
 
 
 class Partner(db.Model):

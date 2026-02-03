@@ -794,3 +794,8 @@ textarea,
   border-top-left-radius: calc(2.7rem - 3px);
   border-top-right-radius: calc(2.7rem - 3px);
 }
+
+/* Fix rainbow bleed in dark mode */
+.dark .premium-rainbow-border>div {
+  background-color: var(--bg-color) !important;
+}
