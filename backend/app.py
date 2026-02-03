@@ -2898,7 +2898,6 @@ def reset_database():
         return jsonify({'error': 'Sai mật khẩu!'}), 403
         
     try:
-    try:
         # Detect database dialect
         if db.engine.dialect.name == 'postgresql':
             # Postgres: Use TRUNCATE CASCADE for clean and fast wipe
