@@ -62,8 +62,21 @@ def normalize_date_sqlite(date_str):
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_custom_func(dbapi_connection, connection_record):
-    dbapi_connection.create_function("remove_accents", 1, remove_accents)
-    dbapi_connection.create_function("normalize_date", 1, normalize_date_sqlite)
+    # Fix: Only register these functions for SQLite connections
+    # When using PostgreSQL (Render/Supabase), this would cause an AttributeError
+    cursor = dbapi_connection.cursor()
+    try:
+        # Check if we are really on SQLite
+        # SQLite cursors don't usually fail on execute("SELECT sqlite_version()")
+        # But a safer way is checking the connection class name or just try/except
+        if type(dbapi_connection).__name__ == 'Connection':  # Standard sqlite3 connection name
+             dbapi_connection.create_function("remove_accents", 1, remove_accents)
+             dbapi_connection.create_function("normalize_date", 1, normalize_date_sqlite)
+    except Exception:
+        # If it fails (e.g. Postgres connection object doesn't have create_function), just ignore
+        pass
+    finally:
+        cursor.close()
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
