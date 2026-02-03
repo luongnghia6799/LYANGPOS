@@ -180,13 +180,16 @@ def monitor_heartbeat():
 #     heartbeat_thread.daemon = True
 #     heartbeat_thread.start()
 
-import tkinter as tk
-from tkinter import ttk
+try:
+    import tkinter as tk
+    from tkinter import ttk
+except ImportError:
+    tk = None
 
 class SplashScreen:
     def __init__(self, port):
-        # Safety check for headless environments
-        if os.environ.get('NO_GUI') or os.environ.get('HEADLESS'):
+        # Safety check for headless environments or missing tkinter
+        if os.environ.get('NO_GUI') or os.environ.get('HEADLESS') or tk is None:
             return
 
         self.port = port
