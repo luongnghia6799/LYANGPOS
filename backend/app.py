@@ -1,6 +1,7 @@
 import os
 import ctypes
 import sqlite3
+import tempfile
 
 # import openpyxl # Lazy import
 # from openpyxl import Workbook
@@ -2870,13 +2871,18 @@ def restore_backup():
             db.session.execute(db.text(stmt))
             
             # 2. Import Data
-            def import_table(sqlite_table, model):
+            # Load Valid IDs for check
+            valid_products = set()
+            valid_partners = set()
+            valid_orders = set()
+            valid_accounts = set()
+
+            def import_table(sqlite_table, model, check_fks=None):
+                # check_fks: dict of { 'column_name': valid_ids_set }
                 try:
-                    # Check table existence in SQLite
                     safe_table_name = f'"{sqlite_table}"'
                     cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND lower(name)=lower('{sqlite_table}');")
-                    if not cursor.fetchone():
-                        return
+                    if not cursor.fetchone(): return
 
                     cursor.execute(f"SELECT * FROM {safe_table_name}")
                     rows = cursor.fetchall()
@@ -2886,8 +2892,25 @@ def restore_backup():
                     
                     for row in rows:
                         data = dict(row)
+                        
+                        # Sanity Check FKs
+                        if check_fks:
+                            skip = False
+                            for col, valid_set in check_fks.items():
+                                val = data.get(col)
+                                if val is not None and val not in valid_set:
+                                    skip = True
+                                    break
+                            if skip: continue
+
                         valid_data = {k: v for k, v in data.items() if k in model_cols}
                         db.session.add(model(**valid_data))
+                        
+                        # Collect IDs for subsequent tables
+                        if sqlite_table == 'product': valid_products.add(data['id'])
+                        if sqlite_table == 'partner': valid_partners.add(data['id'])
+                        if sqlite_table == 'order': valid_orders.add(data['id'])
+                        if sqlite_table == 'bank_account': valid_accounts.add(data['id'])
                     
                     db.session.flush()
                 except Exception as ex:
@@ -2899,12 +2922,14 @@ def restore_backup():
             import_table('partner', Partner)
             import_table('product', Product)
             import_table('print_template', PrintTemplate)
-            import_table('order', Order)
-            import_table('order_detail', OrderDetail)
-            import_table('combo_item', ComboItem)
-            import_table('customer_price', CustomerPrice)
-            import_table('cash_voucher', CashVoucher)
-            import_table('bank_transaction', BankTransaction)
+            
+            import_table('order', Order, {'partner_id': valid_partners})
+            
+            import_table('order_detail', OrderDetail, {'order_id': valid_orders, 'product_id': valid_products})
+            import_table('combo_item', ComboItem, {'combo_id': valid_products, 'product_id': valid_products})
+            import_table('customer_price', CustomerPrice, {'partner_id': valid_partners, 'product_id': valid_products})
+            import_table('cash_voucher', CashVoucher, {'partner_id': valid_partners, 'order_id': valid_orders})
+            import_table('bank_transaction', BankTransaction, {'account_id': valid_accounts, 'partner_id': valid_partners, 'order_id': valid_orders})
             
             # 3. Reset Sequences
             def reset_seq(table, seq_name=None):
