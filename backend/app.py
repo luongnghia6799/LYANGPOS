@@ -19,7 +19,7 @@ from sqlalchemy.orm import joinedload
 from datetime import datetime
 import re
 import unicodedata
-from sqlalchemy import event, inspect
+from sqlalchemy import event, inspect, extract
 from sqlalchemy.engine import Engine
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -1550,26 +1550,22 @@ def get_orders():
 
     # Date filtering
     if year:
-        query = query.filter(db.func.strftime('%Y', Order.date) == str(year))
+        query = query.filter(extract('year', Order.date) == int(year))
     if month:
-        # Match both 'M' and 'MM' formats from frontend
-        m_str = str(month).zfill(2)
-        query = query.filter(db.func.strftime('%m', Order.date) == m_str)
+        query = query.filter(extract('month', Order.date) == int(month))
     if day:
-        d_str = str(day).zfill(2)
-        query = query.filter(db.func.strftime('%d', Order.date) == d_str)
+        query = query.filter(extract('day', Order.date) == int(day))
     
     quarter = request.args.get('quarter', type=int)
     if quarter:
-        # SQLite doesn't have a QUARTER function directly, so we use month ranges
         if quarter == 1:
-            query = query.filter(db.func.strftime('%m', Order.date).in_(['01', '02', '03']))
+            query = query.filter(extract('month', Order.date).in_([1, 2, 3]))
         elif quarter == 2:
-            query = query.filter(db.func.strftime('%m', Order.date).in_(['04', '05', '06']))
+            query = query.filter(extract('month', Order.date).in_([4, 5, 6]))
         elif quarter == 3:
-            query = query.filter(db.func.strftime('%m', Order.date).in_(['07', '08', '09']))
+            query = query.filter(extract('month', Order.date).in_([7, 8, 9]))
         elif quarter == 4:
-            query = query.filter(db.func.strftime('%m', Order.date).in_(['10', '11', '12']))
+            query = query.filter(extract('month', Order.date).in_([10, 11, 12]))
         
     sort_by = request.args.get('sort_by', 'date')
     sort_order = request.args.get('sort_order', 'desc')
@@ -1617,8 +1613,10 @@ def create_order():
         # Custom Order ID Generation (N.DD/MM/YY)
         local_now = datetime.now()
         today_str = local_now.strftime('%d/%m/%y')
-        # Filter by date only, ignoring time
-        count_today = Order.query.filter(db.func.strftime('%Y-%m-%d', Order.date) == local_now.strftime('%Y-%m-%d')).count()
+        # Filter by date range for db agnostic
+        start_of_day = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = local_now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        count_today = Order.query.filter(Order.date >= start_of_day, Order.date <= end_of_day).count()
         display_id = f"{count_today + 1}.{today_str}"
         
         new_order = Order(
@@ -1936,8 +1934,9 @@ def update_order(id):
         if not order.display_id:
             local_now = datetime.now()
             today_str = local_now.strftime('%d/%m/%y')
-            today_sql = local_now.strftime('%Y-%m-%d')
-            count_today = Order.query.filter(db.func.date(Order.date) == today_sql).count()
+            start_of_day = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_of_day = local_now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            count_today = Order.query.filter(Order.date >= start_of_day, Order.date <= end_of_day).count()
             order.display_id = f"{count_today + 1}.{today_str}"
         
         total = 0
@@ -2103,9 +2102,9 @@ def get_bank_transactions():
     year = request.args.get('year')
     month = request.args.get('month')
     if year:
-        query = query.filter(db.func.strftime('%Y', BankTransaction.date) == str(year))
+        query = query.filter(extract('year', BankTransaction.date) == int(year))
     if month:
-        query = query.filter(db.func.strftime('%m', BankTransaction.date) == str(month).zfill(2))
+        query = query.filter(extract('month', BankTransaction.date) == int(month))
         
     transactions = query.order_by(BankTransaction.date.desc()).all()
     return jsonify([t.to_dict() for t in transactions])
@@ -2137,9 +2136,9 @@ def dashboard_stats():
     
     # helper for range filter
     def apply_filters(q):
-        if filter_year: q = q.filter(db.func.strftime('%Y', Order.date) == str(filter_year))
-        if filter_month: q = q.filter(db.func.strftime('%m', Order.date) == str(filter_month).zfill(2))
-        if filter_day: q = q.filter(db.func.strftime('%d', Order.date) == str(filter_day).zfill(2))
+        if filter_year: q = q.filter(extract('year', Order.date) == int(filter_year))
+        if filter_month: q = q.filter(extract('month', Order.date) == int(filter_month))
+        if filter_day: q = q.filter(extract('day', Order.date) == int(filter_day))
         return q
 
     # Revenue is simple sum from Order table (Exclude NODAU)
@@ -2360,23 +2359,21 @@ def get_vouchers():
     quarter = request.args.get('quarter', type=int)
 
     if year:
-        query = query.filter(db.func.strftime('%Y', CashVoucher.date) == str(year))
+        query = query.filter(extract('year', CashVoucher.date) == int(year))
     if month:
-        m_str = str(month).zfill(2)
-        query = query.filter(db.func.strftime('%m', CashVoucher.date) == m_str)
+        query = query.filter(extract('month', CashVoucher.date) == int(month))
     if day:
-        d_str = str(day).zfill(2)
-        query = query.filter(db.func.strftime('%d', CashVoucher.date) == d_str)
+        query = query.filter(extract('day', CashVoucher.date) == int(day))
     
     if quarter:
         if quarter == 1:
-            query = query.filter(db.func.strftime('%m', CashVoucher.date).in_(['01', '02', '03']))
+            query = query.filter(extract('month', CashVoucher.date).in_([1, 2, 3]))
         elif quarter == 2:
-            query = query.filter(db.func.strftime('%m', CashVoucher.date).in_(['04', '05', '06']))
+            query = query.filter(extract('month', CashVoucher.date).in_([4, 5, 6]))
         elif quarter == 3:
-            query = query.filter(db.func.strftime('%m', CashVoucher.date).in_(['07', '08', '09']))
+            query = query.filter(extract('month', CashVoucher.date).in_([7, 8, 9]))
         elif quarter == 4:
-            query = query.filter(db.func.strftime('%m', CashVoucher.date).in_(['10', '11', '12']))
+            query = query.filter(extract('month', CashVoucher.date).in_([10, 11, 12]))
         
     vouchers = query.order_by(CashVoucher.date.desc()).all()
     return jsonify([v.to_dict() for v in vouchers])
