@@ -2800,16 +2800,63 @@ def report_synthesis():
 @app.route('/api/backup', methods=['GET'])
 def download_backup():
     try:
-        db_path = os.path.join(app.instance_path, 'easypos.db')
-        if not os.path.exists(db_path):
-             db_path = os.path.join(app.root_path, 'easypos.db')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        database_url = os.environ.get('DATABASE_URL')
         
-        return send_file(
-            db_path,
-            as_attachment=True,
-            download_name=f"easypos_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
-        )
+        # Case 1: PostgreSQL (Supabase / Render)
+        if database_url:
+            import subprocess
+            
+            # Create a localized backup filename
+            backup_filename = f"lyangpos_cloud_backup_{timestamp}.sql"
+            backup_path = os.path.join(tempfile.gettempdir(), backup_filename)
+            
+            # Clean up the connection string for pg_dump if needed
+            # pg_dump usually accepts the full URI directly
+            
+            # Construct command: pg_dump --dbname=URL --no-owner --no-privileges -f file.sql
+            # Note: pg_dump must be installed on the system (Render has it)
+            cmd = [
+                'pg_dump',
+                str(database_url),
+                '--no-owner',
+                '--no-privileges',
+                '-f',
+                backup_path
+            ]
+            
+            try:
+                # Run with timeout to prevent hanging
+                subprocess.run(cmd, check=True, timeout=60)
+                
+                return send_file(
+                    backup_path,
+                    as_attachment=True,
+                    download_name=backup_filename
+                )
+            except FileNotFoundError:
+                return jsonify({'error': 'System error: pg_dump utility not found. Cannot dump Postgres DB.'}), 500
+            except subprocess.CalledProcessError as e:
+                return jsonify({'error': f'Database Dump Failed: {str(e)}'}), 500
+
+        # Case 2: SQLite (Local)
+        else:
+            db_path = get_storage_path(os.path.join("instance", "easypos.db"))
+            if not os.path.exists(db_path):
+                 # Fallback to root if not in instance
+                 db_path = get_storage_path("easypos.db")
+            
+            if not os.path.exists(db_path):
+                return jsonify({'error': 'Local Database file not found'}), 404
+            
+            return send_file(
+                db_path,
+                as_attachment=True,
+                download_name=f"easypos_local_backup_{timestamp}.db"
+            )
+            
     except Exception as e:
+        app.logger.error(f"Backup Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/restore', methods=['POST'])
