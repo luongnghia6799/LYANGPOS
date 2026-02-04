@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { m, AnimatePresence } from 'framer-motion';
-import { Clock, User, Menu, ListChecks, ChevronRight, Check } from 'lucide-react';
+import { Clock, User, Menu, ListChecks, ChevronRight, Check, Filter } from 'lucide-react';
 import { formatNumber } from '../lib/utils';
 import MobileMenu from '../components/MobileMenu';
 import { cn } from '../lib/utils';
@@ -12,7 +12,8 @@ export default function MobileOrders() {
     const [loading, setLoading] = useState(true);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const [toast, setToast] = useState(null); // Add Toast state
+    const [toast, setToast] = useState(null);
+    const [filterStatus, setFilterStatus] = useState('Pending'); // 'Pending' or 'Completed'
 
     const fetchTodayOrders = async () => {
         setLoading(true);
@@ -22,6 +23,7 @@ export default function MobileOrders() {
             const month = now.getMonth() + 1;
             const day = now.getDate();
 
+            // Note: status filter is handled locally for now
             const res = await axios.get(`/api/orders?type=Sale&year=${year}&month=${month}&day=${day}&limit=100`);
             setOrders(res.data.items || res.data);
         } catch (err) {
@@ -33,16 +35,33 @@ export default function MobileOrders() {
 
     useEffect(() => {
         fetchTodayOrders();
-        const interval = setInterval(fetchTodayOrders, 60000);
+        const interval = setInterval(fetchTodayOrders, 30000);
         return () => clearInterval(interval);
     }, []);
 
-    const handleMarkAsPicked = () => {
-        // Here you could visually mark it locally or call an API
-        // For now, visual feedback
-        setToast({ message: `Đã soạn xong đơn #${selectedOrder.display_id || selectedOrder.id}`, type: 'success' });
-        setTimeout(() => setToast(null), 2000);
-        setSelectedOrder(null);
+    const filteredOrders = useMemo(() => {
+        return orders.filter(o => (o.status || 'Pending') === filterStatus);
+    }, [orders, filterStatus]);
+
+    const handleMarkAsPicked = async () => {
+        if (!selectedOrder) return;
+        try {
+            await axios.post(`/api/orders/${selectedOrder.id}/status`, { status: 'Completed' });
+
+            setToast({ message: `Đã soạn xong đơn #${selectedOrder.display_id || selectedOrder.id}`, type: 'success' });
+
+            // Optimistic update
+            setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, status: 'Completed' } : o));
+
+            setTimeout(() => setToast(null), 2000);
+            setSelectedOrder(null);
+        } catch (err) {
+            setToast({ message: 'Lỗi cập nhật trạng thái', type: 'error' });
+        }
+    };
+
+    const toggleFilter = () => {
+        setFilterStatus(prev => prev === 'Pending' ? 'Completed' : 'Pending');
     };
 
     return (
@@ -56,28 +75,51 @@ export default function MobileOrders() {
                 </button>
                 <div className="flex flex-col items-center">
                     <h1 className="font-bold text-lg uppercase tracking-wider">Soạn Đơn</h1>
-                    <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Hôm nay</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Hôm nay</span>
+                        <span className={cn(
+                            "text-[10px] px-2 py-0.5 rounded-full font-bold",
+                            filterStatus === 'Pending' ? "bg-red-500/30 text-red-100" : "bg-green-500/30 text-green-100"
+                        )}>
+                            {filterStatus === 'Pending' ? 'Chờ soạn' : 'Đã soạn'}
+                        </span>
+                    </div>
                 </div>
-                <button onClick={fetchTodayOrders}>
+                <button
+                    onClick={toggleFilter}
+                    className={cn(
+                        "p-2 rounded-full transition-colors",
+                        filterStatus === 'Completed' ? "bg-white/30" : "hover:bg-white/10"
+                    )}
+                >
                     <ListChecks size={24} />
                 </button>
             </div>
 
             {/* Orders List */}
             <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-8">
-                {loading && <div className="text-center py-10 text-gray-400">Đang tải...</div>}
+                {loading && orders.length === 0 && <div className="text-center py-10 text-gray-400">Đang tải...</div>}
 
-                {!loading && orders.length === 0 && (
-                    <div className="text-center py-10 text-gray-400">Chưa có đơn hàng nào hôm nay</div>
+                {!loading && filteredOrders.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-20 opacity-40">
+                        <Check size={48} className="mb-2" />
+                        <p className="font-bold">Không có đơn hàng nào {filterStatus === 'Pending' ? 'cần soạn' : 'đã soạn'}</p>
+                    </div>
                 )}
 
-                {orders.map(order => (
+                {filteredOrders.map(order => (
                     <m.div
                         key={order.id}
                         layoutId={`order-${order.id}`}
                         onClick={() => setSelectedOrder(order)}
-                        className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 active:scale-[0.98] transition-transform"
+                        className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 active:scale-[0.98] transition-transform relative overflow-hidden"
                     >
+                        {order.status === 'Completed' && (
+                            <div className="absolute top-0 right-0 p-1 bg-green-500 text-white rounded-bl-lg">
+                                <Check size={12} strokeWidth={4} />
+                            </div>
+                        )}
+
                         <div className="flex justify-between items-start mb-2">
                             <div>
                                 <div className="font-bold text-gray-800 dark:text-gray-200">#{order.display_id || order.id}</div>
@@ -94,7 +136,7 @@ export default function MobileOrders() {
 
                         <div className="flex items-center gap-2 pt-2 border-t border-dashed border-gray-100 dark:border-slate-700 mt-2">
                             <User size={14} className="text-gray-400" />
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-300 truncate pr-4">
                                 {order.partner_name || 'Khách lẻ'}
                             </span>
                         </div>
@@ -139,9 +181,7 @@ export default function MobileOrders() {
                                         </div>
                                         <label className="w-8 h-8 rounded-full border-2 border-gray-300 dark:border-slate-600 flex items-center justify-center has-[:checked]:bg-green-500 has-[:checked]:border-green-500 has-[:checked]:text-white transition-colors cursor-pointer">
                                             <input type="checkbox" className="hidden" />
-                                            <Check size={16} className="opacity-0 has-[:checked]:opacity-100" />
-                                            {/* Simple logic: just visual toggle for picker */}
-                                            <div className="hidden peer-checked:block"><Check size={16} /></div>
+                                            <Check size={16} />
                                         </label>
                                     </div>
                                 ))}
@@ -158,12 +198,18 @@ export default function MobileOrders() {
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handleMarkAsPicked}
-                                className="w-full mt-6 bg-primary text-white font-bold py-4 rounded-xl text-lg shadow-lg shadow-primary/30 active:scale-95 transition-transform"
-                            >
-                                Đã Soạn Xong
-                            </button>
+                            {selectedOrder.status !== 'Completed' ? (
+                                <button
+                                    onClick={handleMarkAsPicked}
+                                    className="w-full mt-6 bg-primary text-white font-bold py-4 rounded-xl text-lg shadow-lg shadow-primary/30 active:scale-95 transition-transform"
+                                >
+                                    Đã Soạn Xong
+                                </button>
+                            ) : (
+                                <div className="w-full mt-6 bg-green-500/10 text-green-600 font-bold py-4 rounded-xl text-lg text-center border-2 border-green-500/20">
+                                    ✓ Đã Soạn Xong
+                                </div>
+                            )}
                         </div>
                     </m.div>
                 )}

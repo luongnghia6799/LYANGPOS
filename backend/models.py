@@ -157,6 +157,7 @@ class Order(db.Model):
     amount_paid = db.Column(db.Float, default=0)
     old_debt = db.Column(db.Float, default=0)
     display_id = db.Column(db.String(50), index=True)
+    status = db.Column(db.String(20), default='Pending', index=True) # 'Pending', 'Completed'
     
     partner = db.relationship('Partner', backref=db.backref('orders', lazy='selectin'))
     details = db.relationship('OrderDetail', backref='order', cascade='all, delete-orphan', lazy='selectin')
@@ -176,6 +177,7 @@ class Order(db.Model):
             'type': self.type,
             'note': self.note,
             'old_debt': self.old_debt,
+            'status': self.status,
             'details': [d.to_dict() for d in self.details]
         }
 

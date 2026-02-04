@@ -30,6 +30,9 @@ export default function MobilePOS() {
     const [selectedPartner, setSelectedPartner] = useState(null);
     const [showPartnerSelector, setShowPartnerSelector] = useState(false);
 
+    const searchInputRef = useRef(null);
+    const cartItemRefs = useRef({}); // To store refs for quantity inputs
+
     // Categories (derived from products)
     const categories = useMemo(() => {
         const cats = new Set(products.map(p => p.category || 'Khác').filter(Boolean));
@@ -53,25 +56,29 @@ export default function MobilePOS() {
     }, [products, searchTerm, selectedCategory]);
 
     const addToCart = (product) => {
-        const existing = cart.find(i => i.product_id === product.id);
-        if (existing) {
-            setCart(cart.map(i =>
-                i.product_id === product.id
-                    ? { ...i, quantity: i.quantity + 1 }
-                    : i
+        const existingIdx = cart.findIndex(i => i.product_id === product.id);
+
+        if (existingIdx > -1) {
+            setCart(prev => prev.map((item, idx) =>
+                idx === existingIdx ? { ...item, quantity: item.quantity + 1 } : item
             ));
         } else {
-            setCart([...cart, {
+            const newItem = {
                 product_id: product.id,
                 product_name: product.name,
                 price: product.sale_price,
                 quantity: 1,
                 unit: product.unit
-            }]);
+            };
+            setCart(prev => [...prev, newItem]);
         }
-        setToast({ message: `Đã thêm ${product.name}`, type: 'success' });
 
-        // Auto-hide toast
+        setSearchTerm('');
+        setTimeout(() => {
+            searchInputRef.current?.focus();
+        }, 100);
+
+        setToast({ message: `Đã thêm ${product.name}`, type: 'success' });
         setTimeout(() => setToast(null), 1500);
     };
 
@@ -121,7 +128,7 @@ export default function MobilePOS() {
     ];
 
     return (
-        <div className="h-screen flex flex-col bg-gray-50 dark:bg-slate-900 pb-20 overflow-hidden">
+        <div className="h-[100dvh] flex flex-col bg-gray-50 dark:bg-slate-900 overflow-hidden">
             <MobilePartnerSelector
                 isOpen={showPartnerSelector}
                 onClose={() => setShowPartnerSelector(false)}
@@ -149,6 +156,7 @@ export default function MobilePOS() {
                 <div className="relative">
                     <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
                     <input
+                        ref={searchInputRef}
                         className="w-full bg-gray-100 dark:bg-slate-700 rounded-xl py-2 pl-10 pr-4 outline-none font-medium dark:text-white"
                         placeholder="Tìm sản phẩm..."
                         value={searchTerm}
@@ -209,9 +217,31 @@ export default function MobilePOS() {
                                     <div className="text-[10px] text-gray-500">{formatNumber(item.price)}</div>
                                 </div>
                                 <div className="flex items-center gap-3 bg-gray-100 dark:bg-slate-700 rounded-lg p-1">
-                                    <button onClick={() => updateQuantity(idx, -1)} className="w-6 h-6 flex items-center justify-center text-gray-600 dark:text-gray-300"><Minus size={14} /></button>
-                                    <span className="text-xs font-bold w-4 text-center dark:text-white">{item.quantity}</span>
-                                    <button onClick={() => updateQuantity(idx, 1)} className="w-6 h-6 flex items-center justify-center text-gray-600 dark:text-gray-300"><Plus size={14} /></button>
+                                    <button onClick={() => updateQuantity(idx, -1)} className="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-300"><Minus size={14} /></button>
+                                    <input
+                                        ref={el => cartItemRefs.current[idx] = el}
+                                        type="number"
+                                        inputMode="numeric"
+                                        value={item.quantity}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                setSearchTerm('');
+                                                searchInputRef.current?.focus();
+                                            }
+                                        }}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            const newCart = [...cart];
+                                            newCart[idx].quantity = val;
+                                            if (val <= 0) {
+                                                setCart(cart.filter((_, i) => i !== idx));
+                                            } else {
+                                                setCart(newCart);
+                                            }
+                                        }}
+                                        className="text-xs font-bold w-14 text-center bg-transparent outline-none dark:text-white border-b border-primary/30 focus:border-primary"
+                                    />
+                                    <button onClick={() => updateQuantity(idx, 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-300"><Plus size={14} /></button>
                                 </div>
                             </div>
                         ))}
