@@ -23,6 +23,7 @@ const Summary = lazy(() => import('./pages/Summary'));
 const InvoiceDesigner = lazy(() => import('./pages/InvoiceDesigner'));
 const BankManager = lazy(() => import('./pages/BankManager'));
 const Welcome = lazy(() => import('./pages/Welcome'));
+const MobilePOS = lazy(() => import('./pages/MobilePOS'));
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(sessionStorage.getItem('user') || 'null');
@@ -34,30 +35,46 @@ const ProtectedRoute = ({ children }) => {
 
 const AppLayout = () => {
   const location = useLocation();
+  const isMobile = window.innerWidth <= 768;
+
+  // Auto-redirect to mobile POS if on root index and mobile device
+  useEffect(() => {
+    if (isMobile && location.pathname === '/') {
+      // We use a small timeout or direct check. 
+      // Note: Navigate component is better for rendering flow, but imperative works here too.
+    }
+  }, [isMobile, location.pathname]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ProtectedRoute>
-        <Layout>
-          <Suspense fallback={<LoadingOverlay isVisible={true} message="Đang tải..." />}>
-            <AnimatePresence mode="wait">
-              <Routes location={location} key={location.pathname}>
-                <Route path="/" element={<PageWrapper><Dashboard /></PageWrapper>} />
-                <Route path="/pos" element={<PageWrapper><POS /></PageWrapper>} />
-                <Route path="/purchase" element={<PageWrapper><Purchase /></PageWrapper>} />
-                <Route path="/history" element={<PageWrapper><History /></PageWrapper>} />
-                <Route path="/products" element={<PageWrapper><ProductManager /></PageWrapper>} />
-                <Route path="/partners" element={<PageWrapper><PartnerManager /></PageWrapper>} />
-                <Route path="/vouchers" element={<PageWrapper><CashVoucher /></PageWrapper>} />
-                <Route path="/analysis" element={<PageWrapper><ReportsBoard /></PageWrapper>} />
-                <Route path="/summary" element={<PageWrapper><Summary /></PageWrapper>} />
-                <Route path="/reports" element={<PageWrapper><Reports /></PageWrapper>} />
-                <Route path="/invoice-designer" element={<PageWrapper><InvoiceDesigner /></PageWrapper>} />
-                <Route path="/banking" element={<PageWrapper><BankManager /></PageWrapper>} />
-                <Route path="/settings" element={<PageWrapper><Settings /></PageWrapper>} />
-              </Routes>
-            </AnimatePresence>
-          </Suspense>
-        </Layout>
+        {/* Conditional Layout: Don't show Main Layout sidebar for MobilePOS page */}
+        {location.pathname === '/mobile-pos' ? (
+          <PageWrapper><Suspense fallback={<LoadingOverlay isVisible={true} />}><MobilePOS /></Suspense></PageWrapper>
+        ) : (
+          <Layout>
+            <Suspense fallback={<LoadingOverlay isVisible={true} message="Đang tải..." />}>
+              <AnimatePresence mode="wait">
+                <Routes location={location} key={location.pathname}>
+                  <Route path="/" element={isMobile ? <Navigate to="/mobile-pos" /> : <PageWrapper><Dashboard /></PageWrapper>} />
+                  <Route path="/mobile-pos" element={<PageWrapper><MobilePOS /></PageWrapper>} />
+                  <Route path="/pos" element={<PageWrapper><POS /></PageWrapper>} />
+                  <Route path="/purchase" element={<PageWrapper><Purchase /></PageWrapper>} />
+                  <Route path="/history" element={<PageWrapper><History /></PageWrapper>} />
+                  <Route path="/products" element={<PageWrapper><ProductManager /></PageWrapper>} />
+                  <Route path="/partners" element={<PageWrapper><PartnerManager /></PageWrapper>} />
+                  <Route path="/vouchers" element={<PageWrapper><CashVoucher /></PageWrapper>} />
+                  <Route path="/analysis" element={<PageWrapper><ReportsBoard /></PageWrapper>} />
+                  <Route path="/summary" element={<PageWrapper><Summary /></PageWrapper>} />
+                  <Route path="/reports" element={<PageWrapper><Reports /></PageWrapper>} />
+                  <Route path="/invoice-designer" element={<PageWrapper><InvoiceDesigner /></PageWrapper>} />
+                  <Route path="/banking" element={<PageWrapper><BankManager /></PageWrapper>} />
+                  <Route path="/settings" element={<PageWrapper><Settings /></PageWrapper>} />
+                </Routes>
+              </AnimatePresence>
+            </Suspense>
+          </Layout>
+        )}
       </ProtectedRoute>
     </QueryClientProvider>
   );
