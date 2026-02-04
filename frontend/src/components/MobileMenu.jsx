@@ -14,7 +14,7 @@ export default function MobileMenu({ isOpen, onClose }) {
         { label: 'Nhập Hàng', icon: Package, path: '/mobile-purchase' },
         { label: 'Soạn Đơn', icon: ListChecks, path: '/mobile-orders' },
         { label: 'Trang Chủ Desktop', icon: Home, path: '/' },
-        { label: 'Cài Đặt', icon: Settings, path: '/settings' },
+        { label: 'Cài Đặt', icon: Settings, path: '/mobile-settings' },
     ];
 
     return (

@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProductData } from '../queries/useProductData';
 import { useQueryClient } from '@tanstack/react-query';
 import MobileMenu from '../components/MobileMenu';
+import MobilePartnerSelector from '../components/MobilePartnerSelector'; // New import
 import Toast from '../components/Toast';
 
 export default function MobilePOS() {
@@ -26,6 +27,8 @@ export default function MobilePOS() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [toast, setToast] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedPartner, setSelectedPartner] = useState(null);
+    const [showPartnerSelector, setShowPartnerSelector] = useState(false);
 
     // Categories (derived from products)
     const categories = useMemo(() => {
@@ -88,7 +91,7 @@ export default function MobilePOS() {
         if (cart.length === 0) return;
         try {
             const orderData = {
-                partner_id: null,
+                partner_id: selectedPartner ? selectedPartner.id : null,
                 type: 'Sale',
                 payment_method: 'Cash',
                 details: cart.map(item => ({
@@ -105,6 +108,7 @@ export default function MobilePOS() {
             setCart([]);
             setToast({ message: 'Thanh toán thành công!', type: 'success' });
             setTimeout(() => setToast(null), 2000);
+            setSelectedPartner(null);
         } catch (err) {
             setToast({ message: 'Lỗi thanh toán', type: 'error' });
         }
@@ -118,12 +122,25 @@ export default function MobilePOS() {
 
     return (
         <div className="h-screen flex flex-col bg-gray-50 dark:bg-slate-900 pb-20 overflow-hidden">
+            <MobilePartnerSelector
+                isOpen={showPartnerSelector}
+                onClose={() => setShowPartnerSelector(false)}
+                onSelect={setSelectedPartner}
+                selectedPartner={selectedPartner}
+                type="Customer"
+            />
             {/* Header */}
             <div className="bg-primary p-4 text-white flex items-center justify-between shadow-md z-20">
                 <button onClick={() => setIsMenuOpen(true)}>
                     <Menu size={24} />
                 </button>
-                <h1 className="font-bold text-lg uppercase tracking-wider">Lyang Mobile</h1>
+                <div onClick={() => setShowPartnerSelector(true)} className="flex flex-col items-center cursor-pointer active:scale-95 transition-transform">
+                    <h1 className="font-bold text-lg uppercase tracking-wider">Lyang Mobile</h1>
+                    <div className="flex items-center gap-1 text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+                        <User size={10} />
+                        <span className="truncate max-w-[100px]">{selectedPartner ? selectedPartner.name : 'Khách lẻ'}</span>
+                    </div>
+                </div>
                 <div className="w-6"></div> {/* Spacer */}
             </div>
 

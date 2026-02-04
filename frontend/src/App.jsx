@@ -26,6 +26,7 @@ const Welcome = lazy(() => import('./pages/Welcome'));
 const MobilePOS = lazy(() => import('./pages/MobilePOS'));
 const MobilePurchase = lazy(() => import('./pages/MobilePurchase'));
 const MobileOrders = lazy(() => import('./pages/MobileOrders'));
+const MobileSettings = lazy(() => import('./pages/MobileSettings'));
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(sessionStorage.getItem('user') || 'null');
@@ -46,7 +47,7 @@ const AppLayout = () => {
     }
   }, [isMobile, location.pathname]);
 
-  const isMobilePage = ['/mobile-pos', '/mobile-purchase', '/mobile-orders'].includes(location.pathname);
+  const isMobilePage = ['/mobile-pos', '/mobile-purchase', '/mobile-orders', '/mobile-settings'].includes(location.pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -59,6 +60,7 @@ const AppLayout = () => {
                 <Route path="/mobile-pos" element={<MobilePOS />} />
                 <Route path="/mobile-purchase" element={<MobilePurchase />} />
                 <Route path="/mobile-orders" element={<MobileOrders />} />
+                <Route path="/mobile-settings" element={<MobileSettings />} />
               </Routes>
             </Suspense>
           </PageWrapper>
@@ -71,6 +73,7 @@ const AppLayout = () => {
                   <Route path="/mobile-pos" element={<PageWrapper><MobilePOS /></PageWrapper>} />
                   <Route path="/mobile-purchase" element={<PageWrapper><MobilePurchase /></PageWrapper>} />
                   <Route path="/mobile-orders" element={<PageWrapper><MobileOrders /></PageWrapper>} />
+                  <Route path="/mobile-settings" element={<PageWrapper><MobileSettings /></PageWrapper>} />
                   <Route path="/pos" element={<PageWrapper><POS /></PageWrapper>} />
                   <Route path="/purchase" element={<PageWrapper><Purchase /></PageWrapper>} />
                   <Route path="/history" element={<PageWrapper><History /></PageWrapper>} />

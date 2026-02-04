@@ -8,6 +8,7 @@ import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useProductData, usePartnerData } from '../queries/useProductData';
 import MobileMenu from '../components/MobileMenu';
+import MobilePartnerSelector from '../components/MobilePartnerSelector'; // New import
 import Toast from '../components/Toast';
 
 export default function MobilePurchase() {
@@ -24,8 +25,7 @@ export default function MobilePurchase() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [toast, setToast] = useState(null);
     const [selectedPartner, setSelectedPartner] = useState(null);
-    const [showPartnerModal, setShowPartnerModal] = useState(true); // Show partner selection first? or in cart?
-    // NOTE: For better UX, let's put partner selection in the cart checkout flow or optional.
+    const [showPartnerSelector, setShowPartnerSelector] = useState(false);
 
     // Filter products
     const filteredProducts = useMemo(() => {
@@ -99,6 +99,7 @@ export default function MobilePurchase() {
             setCart([]);
             setToast({ message: 'Nhập hàng thành công!', type: 'success' });
             setTimeout(() => setToast(null), 2000);
+            setSelectedPartner(null);
         } catch (err) {
             setToast({ message: 'Lỗi nhập hàng', type: 'error' });
         }
@@ -106,6 +107,13 @@ export default function MobilePurchase() {
 
     return (
         <div className="h-screen flex flex-col bg-gray-50 dark:bg-slate-900 pb-20 overflow-hidden">
+            <MobilePartnerSelector
+                isOpen={showPartnerSelector}
+                onClose={() => setShowPartnerSelector(false)}
+                onSelect={setSelectedPartner}
+                selectedPartner={selectedPartner}
+                type="Supplier"
+            />
             <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
             {/* Header - Different Color for Purchase Mode */}
@@ -113,9 +121,12 @@ export default function MobilePurchase() {
                 <button onClick={() => setIsMenuOpen(true)}>
                     <Menu size={24} />
                 </button>
-                <div className="flex flex-col items-center">
+                <div onClick={() => setShowPartnerSelector(true)} className="flex flex-col items-center cursor-pointer active:scale-95 transition-transform">
                     <h1 className="font-bold text-lg uppercase tracking-wider">Nhập Kho</h1>
-                    {selectedPartner && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">{selectedPartner.name}</span>}
+                    <div className="flex items-center gap-1 text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+                        <User size={10} />
+                        <span className="truncate max-w-[100px]">{selectedPartner ? selectedPartner.name : 'NCC Vãng Lai'}</span>
+                    </div>
                 </div>
                 <div className="w-6"></div>
             </div>
@@ -138,31 +149,6 @@ export default function MobilePurchase() {
                             <X size={18} />
                         </button>
                     )}
-                </div>
-
-                {/* Partner Quick Select */}
-                <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                    <button
-                        onClick={() => setSelectedPartner(null)}
-                        className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors border",
-                            !selectedPartner ? "bg-[#4a7c59] text-white border-[#4a7c59]" : "text-gray-500 border-gray-200"
-                        )}
-                    >
-                        NCC Vãng Lai
-                    </button>
-                    {partners.slice(0, 5).map(p => (
-                        <button
-                            key={p.id}
-                            onClick={() => setSelectedPartner(p)}
-                            className={cn(
-                                "px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors border",
-                                selectedPartner?.id === p.id ? "bg-[#4a7c59] text-white border-[#4a7c59]" : "text-gray-500 border-gray-200"
-                            )}
-                        >
-                            {p.name}
-                        </button>
-                    ))}
                 </div>
             </div>
 
@@ -245,6 +231,6 @@ export default function MobilePurchase() {
                     </m.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }
