@@ -14,11 +14,25 @@ import POSHistoryPanel from '../components/POSHistoryPanel';
 import LoadingOverlay from '../components/LoadingOverlay';
 import Portal from '../components/Portal';
 
+import { useProductData, usePartnerData } from '../queries/useProductData';
+import { useQueryClient } from '@tanstack/react-query';
+
 export default function POS() {
-    const [products, setProducts] = useState([]);
-    const [partners, setPartners] = useState([]);
+    const { data: productsData, isLoading: isLoadingProducts } = useProductData();
+    const { data: partnersData, isLoading: isLoadingPartners } = usePartnerData();
+    const queryClient = useQueryClient();
+
+    // Fallback to empty array if data not yet loaded
+    const products = productsData || [];
+    const partners = partnersData || [];
+
     const [searchTerm, setSearchTerm] = useState('');
     const [cart, setCart] = useState([]);
+
+    // Removed old fetch useEffects
+    // Use the fetched data directly
+
+
     const [selectedPartner, setSelectedPartner] = useState(null);
     const [partnerSearch, setPartnerSearch] = useState('');
     const [isPartnerDropdownOpen, setIsPartnerDropdownOpen] = useState(false);
@@ -195,8 +209,8 @@ export default function POS() {
     };
 
     useEffect(() => {
-        fetchProducts();
-        fetchPartners();
+        // fetchProducts(); - Removed, using React Query
+        // fetchPartners(); - Removed, using React Query
         fetchSettings();
         fetchBankAccounts();
 

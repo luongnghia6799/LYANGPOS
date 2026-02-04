@@ -15,9 +15,18 @@ import Portal from '../components/Portal';
 import PurchaseHistoryPanel from '../components/PurchaseHistoryPanel';
 
 
+import { useProductData, usePartnerData } from '../queries/useProductData';
+import { useQueryClient } from '@tanstack/react-query';
+
+
 export default function Purchase() {
-    const [products, setProducts] = useState([]);
-    const [partners, setPartners] = useState([]);
+    const { data: productsData, isLoading: isLoadingProducts } = useProductData();
+    const { data: partnersData, isLoading: isLoadingPartners } = usePartnerData();
+    const queryClient = useQueryClient();
+
+    const products = productsData || [];
+    const partners = partnersData || [];
+
     const [searchTerm, setSearchTerm] = useState('');
     const [cart, setCart] = useState([]);
     const [selectedPartner, setSelectedPartner] = useState(null);
@@ -236,8 +245,8 @@ export default function Purchase() {
     };
 
     useEffect(() => {
-        fetchProducts();
-        fetchPartners();
+        // fetchProducts(); - Removed, using React Query
+        // fetchPartners(); - Removed, using React Query
         fetchSettings();
         fetchBankAccounts();
 

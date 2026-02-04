@@ -3,8 +3,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'r
 import { LazyMotion, domMax, m, AnimatePresence } from 'framer-motion';
 import Layout from './components/Layout';
 import PageWrapper from './components/PageWrapper';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 import FontLoader from './components/FontLoader';
-
 import LoadingOverlay from './components/LoadingOverlay';
 
 // Lazy load pages
@@ -34,29 +35,31 @@ const ProtectedRoute = ({ children }) => {
 const AppLayout = () => {
   const location = useLocation();
   return (
-    <ProtectedRoute>
-      <Layout>
-        <Suspense fallback={<LoadingOverlay isVisible={true} message="Đang tải..." />}>
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<PageWrapper><Dashboard /></PageWrapper>} />
-              <Route path="/pos" element={<PageWrapper><POS /></PageWrapper>} />
-              <Route path="/purchase" element={<PageWrapper><Purchase /></PageWrapper>} />
-              <Route path="/history" element={<PageWrapper><History /></PageWrapper>} />
-              <Route path="/products" element={<PageWrapper><ProductManager /></PageWrapper>} />
-              <Route path="/partners" element={<PageWrapper><PartnerManager /></PageWrapper>} />
-              <Route path="/vouchers" element={<PageWrapper><CashVoucher /></PageWrapper>} />
-              <Route path="/analysis" element={<PageWrapper><ReportsBoard /></PageWrapper>} />
-              <Route path="/summary" element={<PageWrapper><Summary /></PageWrapper>} />
-              <Route path="/reports" element={<PageWrapper><Reports /></PageWrapper>} />
-              <Route path="/invoice-designer" element={<PageWrapper><InvoiceDesigner /></PageWrapper>} />
-              <Route path="/banking" element={<PageWrapper><BankManager /></PageWrapper>} />
-              <Route path="/settings" element={<PageWrapper><Settings /></PageWrapper>} />
-            </Routes>
-          </AnimatePresence>
-        </Suspense>
-      </Layout>
-    </ProtectedRoute>
+    <QueryClientProvider client={queryClient}>
+      <ProtectedRoute>
+        <Layout>
+          <Suspense fallback={<LoadingOverlay isVisible={true} message="Đang tải..." />}>
+            <AnimatePresence mode="wait">
+              <Routes location={location} key={location.pathname}>
+                <Route path="/" element={<PageWrapper><Dashboard /></PageWrapper>} />
+                <Route path="/pos" element={<PageWrapper><POS /></PageWrapper>} />
+                <Route path="/purchase" element={<PageWrapper><Purchase /></PageWrapper>} />
+                <Route path="/history" element={<PageWrapper><History /></PageWrapper>} />
+                <Route path="/products" element={<PageWrapper><ProductManager /></PageWrapper>} />
+                <Route path="/partners" element={<PageWrapper><PartnerManager /></PageWrapper>} />
+                <Route path="/vouchers" element={<PageWrapper><CashVoucher /></PageWrapper>} />
+                <Route path="/analysis" element={<PageWrapper><ReportsBoard /></PageWrapper>} />
+                <Route path="/summary" element={<PageWrapper><Summary /></PageWrapper>} />
+                <Route path="/reports" element={<PageWrapper><Reports /></PageWrapper>} />
+                <Route path="/invoice-designer" element={<PageWrapper><InvoiceDesigner /></PageWrapper>} />
+                <Route path="/banking" element={<PageWrapper><BankManager /></PageWrapper>} />
+                <Route path="/settings" element={<PageWrapper><Settings /></PageWrapper>} />
+              </Routes>
+            </AnimatePresence>
+          </Suspense>
+        </Layout>
+      </ProtectedRoute>
+    </QueryClientProvider>
   );
 };
 
