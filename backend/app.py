@@ -16,12 +16,19 @@ from flask_cors import CORS
 from models import db, Product, Partner, Order, OrderDetail, CashVoucher, CustomerPrice, AppSetting, ComboItem, PrintTemplate, User, BankAccount, BankTransaction
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import re
 import unicodedata
 from sqlalchemy import event, inspect, extract
 from sqlalchemy.engine import Engine
 from werkzeug.security import generate_password_hash, check_password_hash
+
+
+def get_vn_time():
+    """Returns naive datetime in Vietnam Timezone (UTC+7)"""
+    utc_now = datetime.now(timezone.utc)
+    vn_tz = timezone(timedelta(hours=7))
+    return utc_now.astimezone(vn_tz).replace(tzinfo=None)
 
 def remove_accents(s):
     if not s: return ""
@@ -1611,7 +1618,7 @@ def create_order():
     
     try:
         # Custom Order ID Generation (N.DD/MM/YY)
-        local_now = datetime.now()
+        local_now = get_vn_time()
         today_str = local_now.strftime('%d/%m/%y')
         # Filter by date range for db agnostic
         start_of_day = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -1620,6 +1627,7 @@ def create_order():
         display_id = f"{count_today + 1}.{today_str}"
         
         new_order = Order(
+            date=local_now,
             partner_id=data.get('partner_id'),
             type=data['type'],
             payment_method=data['payment_method'],
@@ -1932,12 +1940,13 @@ def update_order(id):
         order.amount_paid = data.get('amount_paid', 0)
         
         if not order.display_id:
-            local_now = datetime.now()
+            local_now = get_vn_time()
             today_str = local_now.strftime('%d/%m/%y')
             start_of_day = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
             end_of_day = local_now.replace(hour=23, minute=59, second=59, microsecond=999999)
             count_today = Order.query.filter(Order.date >= start_of_day, Order.date <= end_of_day).count()
             order.display_id = f"{count_today + 1}.{today_str}"
+            order.date = local_now
         
         total = 0
         for item in data['details']:
@@ -2121,7 +2130,7 @@ def dashboard_stats():
     day = request.args.get('day')
 
     # For revenue and profit, default to today if no filter is provided
-    now_dt = datetime.now()
+    now_dt = get_vn_time()
     filter_year = year
     filter_month = month
     filter_day = day
@@ -2182,7 +2191,7 @@ def dashboard_stats():
     suppliers_with_debt = sorted([p for p in all_partners if p.is_supplier and p.debt_balance < 0], key=lambda x: abs(x.debt_balance), reverse=True)[:10]
 
     # --- 3. 7-Day Revenue Chart ---
-    today_dt = datetime.now()
+    today_dt = get_vn_time()
     seven_days_ago = today_dt - timedelta(days=7)
     
     # Daily Revenue

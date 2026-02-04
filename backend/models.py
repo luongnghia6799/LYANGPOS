@@ -1,7 +1,11 @@
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timezone
+import os
+from datetime import datetime, timezone, timedelta
 
 def utc_now():
+    # Returns naive datetime in VN Time (UTC+7) if on Cloud, else system time
+    if os.environ.get('DATABASE_URL') and 'postgres' in os.environ.get('DATABASE_URL'):
+        utc = datetime.now(timezone.utc)
+        return utc.astimezone(timezone(timedelta(hours=7))).replace(tzinfo=None)
     return datetime.now()
 
 db = SQLAlchemy()
