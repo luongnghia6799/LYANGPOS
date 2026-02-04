@@ -1,4 +1,5 @@
 import os
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone, timedelta
 
 def utc_now():
