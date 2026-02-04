@@ -155,7 +155,7 @@ export default function MobilePOS() {
     };
 
     return (
-        <div className="h-[100dvh] flex flex-col bg-gray-50 dark:bg-slate-950 overflow-hidden">
+        <div className="fixed inset-0 h-[100dvh] flex flex-col bg-gray-50 dark:bg-slate-950 overflow-hidden">
             <MobilePartnerSelector
                 isOpen={showPartnerSelector}
                 onClose={() => setShowPartnerSelector(false)}
@@ -183,8 +183,8 @@ export default function MobilePOS() {
                 </button>
             </div>
 
-            {/* Sticky Search & Categories */}
-            <div className="bg-white dark:bg-slate-900 shadow-sm z-10 sticky top-0 border-b border-gray-100 dark:border-slate-800">
+            {/* Search & Categories (Fixed) */}
+            <div className="bg-white dark:bg-slate-900 shadow-sm z-10 border-b border-gray-100 dark:border-slate-800 shrink-0">
                 <div className="p-3 pb-2">
                     <div className="relative">
                         <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
