@@ -155,21 +155,14 @@ export default function MobilePOS() {
     };
 
     return (
-        <div className="fixed inset-0 h-[100dvh] flex flex-col bg-gray-50 dark:bg-slate-950 overflow-hidden">
-            <MobilePartnerSelector
-                isOpen={showPartnerSelector}
-                onClose={() => setShowPartnerSelector(false)}
-                onSelect={setSelectedPartner}
-                selectedPartner={selectedPartner}
-                type="Customer"
-            />
+        <div className="h-[100dvh] flex flex-col bg-gray-50 dark:bg-slate-950 overflow-hidden relative">
 
             {/* Minimal Header */}
             <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800 p-4 flex items-center justify-between z-20">
                 <button onClick={() => setIsMenuOpen(true)} className="p-2 -ml-2 text-gray-500 dark:text-gray-400">
                     <Menu size={24} />
                 </button>
-                <div onClick={() => setShowPartnerSelector(true)} className="flex flex-col items-center flex-1 mx-4">
+                <div onClick={() => setShowPartnerSelector(true)} className="flex flex-col items-center flex-1 mx-4 cursor-pointer">
                     <h1 className="font-black text-sm uppercase tracking-[0.2em] text-primary">LYANG POS</h1>
                     <div className="flex items-center gap-1.5 mt-0.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
@@ -458,6 +451,13 @@ export default function MobilePOS() {
                     setItemToDelete(null);
                 }}
                 onCancel={() => setItemToDelete(null)}
+            />
+            <MobilePartnerSelector
+                isOpen={showPartnerSelector}
+                onClose={() => setShowPartnerSelector(false)}
+                onSelect={setSelectedPartner}
+                selectedPartner={selectedPartner}
+                type="Customer"
             />
         </div >
     );
