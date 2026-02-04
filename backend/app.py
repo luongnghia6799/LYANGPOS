@@ -163,6 +163,22 @@ os.makedirs(get_storage_path("instance"), exist_ok=True)
 db.init_app(app)
 with app.app_context():
     db.create_all()
+    
+    # --- Auto-Migration for 'status' column in 'order' table ---
+    try:
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            # Check if column exists (Postgres/SQLite syntax varies, but ALTER TABLE ADD if not exists is safer with try-except)
+            try:
+                # Use quotes for "order" as it's a reserved word in Postgres
+                conn.execute(text('ALTER TABLE "order" ADD COLUMN status VARCHAR(20) DEFAULT \'Pending\''))
+                conn.commit()
+                print("Migration: Added 'status' column to 'order' table.")
+            except Exception:
+                # Ignore if column already exists
+                pass
+    except Exception as e:
+        print(f"Auto-migration error: {e}")
 
 import time
 import threading
