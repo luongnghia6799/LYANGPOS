@@ -27,8 +27,11 @@ export default function MobilePurchase() {
     const products = productsData || [];
     const partners = partnersData || [];
 
-    const [isCartExpanded, setIsCartExpanded] = useState(true);
+    const [isCartExpanded, setIsCartExpanded] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('Cash');
+    const [bankAccounts, setBankAccounts] = useState([]);
+    const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
     const [cart, setCart] = useState(() => {
         const saved = localStorage.getItem('mobile_purchase_cart');
         return saved ? JSON.parse(saved) : [];
@@ -40,6 +43,15 @@ export default function MobilePurchase() {
         const saved = localStorage.getItem('mobile_purchase_partner');
         return saved ? JSON.parse(saved) : null;
     });
+
+    useEffect(() => {
+        if (paymentMethod === 'Bank') {
+            axios.get('/api/bank-accounts').then(res => {
+                setBankAccounts(res.data);
+                if (res.data.length > 0) setSelectedBankAccountId(res.data[0].id);
+            });
+        }
+    }, [paymentMethod]);
 
     useEffect(() => {
         localStorage.setItem('mobile_purchase_cart', JSON.stringify(cart));
@@ -120,7 +132,8 @@ export default function MobilePurchase() {
             const orderData = {
                 partner_id: selectedPartner ? selectedPartner.id : null,
                 type: 'Purchase',
-                payment_method: 'Cash',
+                payment_method: paymentMethod,
+                bank_account_id: paymentMethod === 'Bank' ? selectedBankAccountId : null,
                 details: cart.map(item => ({
                     product_id: item.product_id,
                     product_name: item.product_name,
@@ -128,7 +141,7 @@ export default function MobilePurchase() {
                     price: item.price
                 })),
                 note: 'Mobile Purchase Order',
-                amount_paid: totalAmount
+                amount_paid: paymentMethod === 'Debt' ? 0 : totalAmount
             };
             await axios.post('/api/orders', orderData);
             setCart([]);
@@ -242,10 +255,16 @@ export default function MobilePurchase() {
                         initial={{ y: '100%', opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: '100%', opacity: 0 }}
-                        className="fixed bottom-0 left-0 right-0 z-40 pb-4 px-3 pointer-events-none"
+                        className="fixed bottom-0 left-0 right-0 z-40 pb-4 px-3 pointer-events-none flex flex-col justify-end"
+                        transition={{ type: 'spring', damping: 30, stiffness: 300, mass: 0.8 }}
                     >
-                        {/* Premium Gradient Container (Green Theme) */}
-                        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_-20px_50px_-15px_rgba(40,167,69,0.15)] border border-[#4a7c59]/20 overflow-hidden flex flex-col transition-all pointer-events-auto relative">
+                        {/* Premium Gradient Container */}
+                        <m.div
+                            layout
+                            className={cn(
+                                "bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden flex flex-col pointer-events-auto relative",
+                                "max-h-[70dvh]"
+                            )}>
                             {/* Decorative Background Glow */}
                             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#4a7c59] to-transparent opacity-50"></div>
 
@@ -259,7 +278,7 @@ export default function MobilePurchase() {
                                     "p-5 flex justify-between items-center cursor-pointer transition-all",
                                     isCartExpanded
                                         ? "bg-gradient-to-b from-[#4a7c59]/5 to-transparent border-b border-gray-100 dark:border-slate-800"
-                                        : "bg-gradient-to-r from-[#4a7c59] to-emerald-600 text-white shadow-xl"
+                                        : "bg-gradient-to-r from-[#4a7c59] to-[#4a7c59]/80 text-white shadow-xl"
                                 )}
                             >
                                 <div className="flex items-center gap-3">
@@ -299,83 +318,137 @@ export default function MobilePurchase() {
 
                             {/* Cart Items (Expanded) */}
                             {isCartExpanded && (
-                                <div className="max-h-[35vh] overflow-y-auto no-scrollbar bg-gray-50/10 dark:bg-slate-900/20 px-4 py-2">
-                                    {cart.map((item, idx) => (
-                                        <m.div key={idx} className="relative mb-1 last:mb-0 group">
-                                            {/* Delete Action Background */}
-                                            <div
-                                                className="absolute inset-y-0 right-0 w-20 bg-red-500 rounded-2xl flex items-center justify-center text-white"
-                                                onClick={() => setItemToDelete(idx)}
-                                            >
-                                                <Trash2 size={20} />
-                                            </div>
+                                <div className="max-h-[155px] overflow-y-auto no-scrollbar bg-gray-50/10 dark:bg-slate-900/20 px-4 py-2">
+                                    {[...cart].reverse().map((item, revIdx) => {
+                                        const idx = cart.length - 1 - revIdx;
+                                        return (
+                                            <m.div key={idx} className="relative mb-1 last:mb-0 group">
+                                                {/* Delete Action Background */}
+                                                <div
+                                                    className="absolute inset-y-0 right-0 w-20 bg-red-500 rounded-2xl flex items-center justify-center text-white"
+                                                    onClick={() => setItemToDelete(idx)}
+                                                >
+                                                    <Trash2 size={20} />
+                                                </div>
 
-                                            <m.div
-                                                drag="x"
-                                                dragConstraints={{ left: -80, right: 0 }}
-                                                dragElastic={0.1}
-                                                className="flex items-center justify-between py-3 border-b border-gray-100/50 dark:border-slate-800/50 last:border-0 gap-3 bg-white dark:bg-slate-900 relative z-10"
-                                            >
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-extrabold text-[12px] text-gray-800 dark:text-gray-200 leading-tight uppercase truncate">
-                                                        {item.product_name || item.name}
+                                                <m.div
+                                                    drag="x"
+                                                    dragConstraints={{ left: -80, right: 0 }}
+                                                    dragElastic={0.1}
+                                                    className="flex items-center justify-between py-3 border-b border-gray-100/50 dark:border-slate-800/50 last:border-0 gap-3 bg-white dark:bg-slate-900 relative z-10"
+                                                >
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-extrabold text-[12px] text-gray-800 dark:text-gray-200 leading-tight uppercase truncate">
+                                                            {item.product_name || item.name}
+                                                        </div>
+                                                        <div className="text-[9px] font-black text-[#4a7c59] mt-1 flex items-center gap-2">
+                                                            <span>Giá nhập: {formatNumber(item.price)}đ</span>
+                                                            <span className="w-1 h-1 rounded-full bg-[#4a7c59]/30"></span>
+                                                            <span className="text-gray-400">T.Tiền: {formatNumber(item.price * item.quantity)}đ</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="text-[9px] font-black text-[#4a7c59] mt-1 flex items-center gap-2">
-                                                        <span>Giá nhập: {formatNumber(item.price)}đ</span>
-                                                        <span className="w-1 h-1 rounded-full bg-[#4a7c59]/30"></span>
-                                                        <span className="text-gray-400">T.Tiền: {formatNumber(item.price * item.quantity)}đ</span>
+                                                    <div className="flex items-center bg-gray-100 dark:bg-slate-800 rounded-xl p-0.5 border border-gray-200 dark:border-white/5 shrink-0">
+                                                        <button onClick={() => updateQuantity(idx, -1)} className="w-8 h-8 flex items-center justify-center text-[#4a7c59] active:scale-90 transition-transform"><Minus size={14} strokeWidth={3} /></button>
+                                                        <input
+                                                            ref={el => cartItemRefs.current[idx] = el}
+                                                            type="number"
+                                                            inputMode="numeric"
+                                                            value={item.quantity}
+                                                            onFocus={(e) => e.target.select()}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    setSearchTerm('');
+                                                                    searchInputRef.current?.focus();
+                                                                }
+                                                            }}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value) || 0;
+                                                                const newCart = [...cart];
+                                                                newCart[idx].quantity = val;
+                                                                if (val <= 0) {
+                                                                    setItemToDelete(idx);
+                                                                } else {
+                                                                    setCart(newCart);
+                                                                }
+                                                            }}
+                                                            className="text-xs font-black w-7 text-center bg-transparent outline-none dark:text-white"
+                                                        />
+                                                        <button onClick={() => updateQuantity(idx, 1)} className="w-8 h-8 flex items-center justify-center text-[#4a7c59] active:scale-90 transition-transform"><Plus size={14} strokeWidth={3} /></button>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center bg-gray-100 dark:bg-slate-800 rounded-xl p-0.5 border border-gray-200 dark:border-white/5 shrink-0">
-                                                    <button onClick={() => updateQuantity(idx, -1)} className="w-8 h-8 flex items-center justify-center text-[#4a7c59] active:scale-90 transition-transform"><Minus size={14} strokeWidth={3} /></button>
-                                                    <input
-                                                        ref={el => cartItemRefs.current[idx] = el}
-                                                        type="number"
-                                                        inputMode="numeric"
-                                                        value={item.quantity}
-                                                        onFocus={(e) => e.target.select()}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                setSearchTerm('');
-                                                                searchInputRef.current?.focus();
-                                                            }
-                                                        }}
-                                                        onChange={(e) => {
-                                                            const val = parseInt(e.target.value) || 0;
-                                                            const newCart = [...cart];
-                                                            newCart[idx].quantity = val;
-                                                            if (val <= 0) {
-                                                                setItemToDelete(idx);
-                                                            } else {
-                                                                setCart(newCart);
-                                                            }
-                                                        }}
-                                                        className="text-xs font-black w-7 text-center bg-transparent outline-none dark:text-white"
-                                                    />
-                                                    <button onClick={() => updateQuantity(idx, 1)} className="w-8 h-8 flex items-center justify-center text-[#4a7c59] active:scale-90 transition-transform"><Plus size={14} strokeWidth={3} /></button>
-                                                </div>
+                                                </m.div>
                                             </m.div>
-                                        </m.div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
 
-                            {/* Checkout Final Action (Sticky when expanded) */}
+                            {/* Compact Payment Method Selector */}
+                            {isCartExpanded && (
+                                <div className="px-5 py-2 border-t border-gray-100 dark:border-slate-800/50">
+                                    <div className="flex p-1 bg-gray-100 dark:bg-slate-800 rounded-[1.25rem] relative">
+                                        {[
+                                            { id: 'Cash', label: 'Tiền mặt' },
+                                            { id: 'Bank', label: 'Chuyển khoản' },
+                                            { id: 'Debt', label: 'Ghi nợ' }
+                                        ].map(method => (
+                                            <button
+                                                key={method.id}
+                                                onClick={() => { setPaymentMethod(method.id); triggerHaptic('light'); }}
+                                                className={cn(
+                                                    "flex-1 py-2 rounded-xl text-[10px] font-black transition-all relative z-10",
+                                                    paymentMethod === method.id
+                                                        ? "text-white"
+                                                        : "text-gray-500 dark:text-gray-400"
+                                                )}
+                                            >
+                                                {method.label}
+                                                {paymentMethod === method.id && (
+                                                    <m.div
+                                                        layoutId="active-method-purchase"
+                                                        className="absolute inset-0 bg-[#4a7c59] rounded-xl -z-10 shadow-sm"
+                                                    />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Bank Selector - Slim version */}
+                                    {paymentMethod === 'Bank' && bankAccounts.length > 0 && (
+                                        <m.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            className="mt-2 overflow-hidden"
+                                        >
+                                            <select
+                                                value={selectedBankAccountId}
+                                                onChange={(e) => setSelectedBankAccountId(e.target.value)}
+                                                className="w-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2 text-[10px] font-bold outline-none text-gray-700 dark:text-gray-200"
+                                            >
+                                                {bankAccounts.map(bank => (
+                                                    <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_number}</option>
+                                                ))}
+                                            </select>
+                                        </m.div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Checkout Final Action */}
                             <div className={cn(
-                                "p-4 pt-2 transition-all",
+                                "p-5 pt-2 transition-all shrink-0",
                                 isCartExpanded ? "bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800" : "hidden"
                             )}>
                                 <button
                                     onClick={handleCheckout}
                                     className="w-full bg-[#4a7c59] text-white py-4 rounded-3xl font-black uppercase tracking-[0.2em] shadow-xl shadow-[#4a7c59]/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                                 >
-                                    <span>Xác Nhận và Lưu</span>
+                                    <span>Lưu hóa đơn</span>
                                     <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
                                         <ChevronRight size={18} />
                                     </div>
                                 </button>
                             </div>
-                        </div>
+                        </m.div>
                     </m.div>
                 )}
             </AnimatePresence>
