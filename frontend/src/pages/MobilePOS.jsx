@@ -1,15 +1,25 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { m, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Minus, User, X, Menu, ChevronRight, ShoppingCart } from 'lucide-react';
+import { Search, Plus, Minus, User, X, Menu, ChevronRight, ShoppingCart, Trash2, ChevronDown } from 'lucide-react';
 import { formatNumber } from '../lib/utils';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useProductData } from '../queries/useProductData';
 import MobileMenu from '../components/MobileMenu';
 import MobilePartnerSelector from '../components/MobilePartnerSelector';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function MobilePOS() {
+    const triggerHaptic = (style = 'medium') => {
+        if (window.navigator?.vibrate) {
+            if (style === 'light') window.navigator.vibrate(10);
+            else if (style === 'medium') window.navigator.vibrate(20);
+            else if (style === 'heavy') window.navigator.vibrate([30, 50, 30]);
+            else if (style === 'success') window.navigator.vibrate([10, 30, 10]);
+        }
+    };
+
     const navigate = useNavigate();
     const { data: productsData } = useProductData();
     const [products, setProducts] = useState([]);
@@ -51,6 +61,7 @@ export default function MobilePOS() {
     }, [productsData]);
 
     const [isCartExpanded, setIsCartExpanded] = useState(true);
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     const categories = useMemo(() => {
         const cats = new Set(products.map(p => p.category || 'Khác').filter(Boolean));
@@ -73,6 +84,7 @@ export default function MobilePOS() {
     }, [products, searchTerm, selectedCategory]);
 
     const addToCart = (product) => {
+        triggerHaptic('light');
         const existingIdx = cart.findIndex(i => i.product_id === product.id);
         if (existingIdx > -1) {
             setCart(prev => prev.map((item, idx) =>
@@ -103,6 +115,7 @@ export default function MobilePOS() {
     };
 
     const updateQuantity = (idx, delta) => {
+        triggerHaptic('light');
         const newCart = [...cart];
         newCart[idx].quantity += delta;
         if (newCart[idx].quantity <= 0) {
@@ -116,6 +129,7 @@ export default function MobilePOS() {
 
     const handleCheckout = async () => {
         if (cart.length === 0) return;
+        triggerHaptic('medium');
         try {
             const orderData = {
                 partner_id: selectedPartner ? selectedPartner.id : null,
@@ -226,13 +240,26 @@ export default function MobilePOS() {
                                     {p.name}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
                                     {p.unit}
                                 </div>
                                 <div className="text-[10px] font-black text-primary/70 tracking-tight">
                                     Mã: {p.code || '---'}
                                 </div>
+                                <div className={cn(
+                                    "text-[10px] font-black tracking-tight px-2 py-0.5 rounded-md",
+                                    (p.current_stock || 0) <= 0
+                                        ? "bg-red-50 text-red-500 dark:bg-red-500/10"
+                                        : "bg-primary/5 text-primary dark:bg-primary/10"
+                                )}>
+                                    Tồn: {p.current_stock || 0}
+                                </div>
+                                {p.secondary_unit && (
+                                    <div className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-md italic">
+                                        1 {p.unit} = {p.multiplier} {p.secondary_unit}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -251,91 +278,146 @@ export default function MobilePOS() {
                 ))}
             </div>
 
-            {/* Bottom Cart Action (Above Bottom Nav) */}
+            {/* Bottom Cart Action (High Visibility Floating Panel) */}
             <AnimatePresence>
                 {cart.length > 0 && (
                     <m.div
-                        initial={{ y: '100%' }}
-                        animate={{ y: 0 }}
-                        exit={{ y: '100%' }}
-                        className="fixed bottom-0 left-0 right-0 z-30 flex flex-col"
+                        initial={{ y: '100%', opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: '100%', opacity: 0 }}
+                        className="fixed bottom-0 left-0 right-0 z-40 pb-4 px-3 pointer-events-none"
                     >
-                        {/* Cart Items List Container */}
-                        <div className="mx-3 mb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col transition-all">
+                        {/* Premium Gradient Container */}
+                        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden flex flex-col transition-all pointer-events-auto relative">
+                            {/* Decorative Background Glow */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+
+                            {/* Pro Header / Summary Bar */}
                             <div
-                                onClick={() => setIsCartExpanded(!isCartExpanded)}
-                                className="p-3 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50 cursor-pointer active:bg-gray-100 dark:active:bg-slate-800"
+                                onClick={() => {
+                                    setIsCartExpanded(!isCartExpanded);
+                                    triggerHaptic('medium');
+                                }}
+                                className={cn(
+                                    "p-5 flex justify-between items-center cursor-pointer transition-all",
+                                    isCartExpanded
+                                        ? "bg-gradient-to-b from-primary/5 to-transparent border-b border-gray-100 dark:border-slate-800"
+                                        : "bg-gradient-to-r from-indigo-600 to-primary text-white shadow-xl"
+                                )}
                             >
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-primary p-1.5 rounded-lg text-white">
-                                        <ShoppingCart size={14} />
+                                <div className="flex items-center gap-3">
+                                    <div className={cn(
+                                        "p-2.5 rounded-2xl transition-all shadow-lg cursor-pointer",
+                                        isCartExpanded ? "bg-primary text-white animate-pulse" : "bg-white text-primary"
+                                    )}>
+                                        <ShoppingCart size={20} strokeWidth={2.5} />
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="font-black text-[10px] uppercase tracking-wider">Giỏ hàng ({cart.length})</span>
-                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{isCartExpanded ? 'Bấm để thu gọn' : 'Bấm để xem chi tiết'}</span>
+                                        <span className={cn("font-black text-xs uppercase tracking-[0.15em]", isCartExpanded ? "text-gray-900 dark:text-white" : "text-white")}>
+                                            ({cart.length})
+                                        </span>
+                                        {!isCartExpanded && (
+                                            <span className="text-[10px] font-bold text-white/60 uppercase tracking-tighter">Thanh toán ngay</span>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4">
-                                    <button onClick={(e) => { e.stopPropagation(); setCart([]); }} className="text-[10px] font-bold text-red-500 uppercase">Xóa hết</button>
-                                    <div className={cn("transition-transform duration-300", isCartExpanded ? "rotate-180" : "rotate-0")}>
-                                        <ChevronRight size={16} className="rotate-90 text-gray-400" />
+
+                                <div className="flex items-center gap-4 flex-1 justify-end">
+                                    <div className="text-right flex flex-col items-end">
+                                        <div className={cn("font-black text-xl leading-none tracking-tighter", isCartExpanded ? "text-primary" : "text-white")}>
+                                            {formatNumber(totalAmount)}
+                                        </div>
+                                        {!isCartExpanded && <div className="text-[8px] font-bold uppercase tracking-widest opacity-60 text-right">Thành tiền</div>}
                                     </div>
+                                    {isCartExpanded && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setItemToDelete('all'); }}
+                                            className="w-10 h-10 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all active:scale-90 border border-red-100"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
+
+                            {/* Cart Items (Expanded) */}
                             {isCartExpanded && (
-                                <div className="overflow-y-auto max-h-[25vh]">
+                                <div className="max-h-[35vh] overflow-y-auto no-scrollbar bg-gray-50/10 dark:bg-slate-900/20 px-4 py-2">
                                     {cart.map((item, idx) => (
-                                        <div key={idx} className="flex justify-between items-start p-3 border-b border-gray-50 dark:border-slate-800/50 last:border-0 gap-2">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-xs font-bold dark:text-gray-200 leading-tight break-words">{item.product_name}</div>
-                                                <div className="text-[10px] text-gray-400 font-bold mt-0.5">{formatNumber(item.price)}</div>
+                                        <m.div key={idx} className="relative mb-1 last:mb-0 group">
+                                            {/* Delete Action Background */}
+                                            <div
+                                                className="absolute inset-y-0 right-0 w-20 bg-red-500 rounded-2xl flex items-center justify-center text-white"
+                                                onClick={() => setItemToDelete(idx)}
+                                            >
+                                                <Trash2 size={20} />
                                             </div>
-                                            <div className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 rounded-xl p-0.5 shrink-0 w-[110px] justify-between">
-                                                <button onClick={() => updateQuantity(idx, -1)} className="w-8 h-8 flex items-center justify-center text-gray-500"><Minus size={14} /></button>
-                                                <input
-                                                    ref={el => cartItemRefs.current[idx] = el}
-                                                    type="number"
-                                                    inputMode="numeric"
-                                                    value={item.quantity}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            setSearchTerm('');
-                                                            searchInputRef.current?.focus();
-                                                        }
-                                                    }}
-                                                    onChange={(e) => {
-                                                        const val = parseInt(e.target.value) || 0;
-                                                        const newCart = [...cart];
-                                                        newCart[idx].quantity = val;
-                                                        if (val <= 0) {
-                                                            setCart(cart.filter((_, i) => i !== idx));
-                                                        } else {
-                                                            setCart(newCart);
-                                                        }
-                                                    }}
-                                                    className="text-xs font-black w-8 text-center bg-transparent outline-none dark:text-white"
-                                                />
-                                                <button onClick={() => updateQuantity(idx, 1)} className="w-8 h-8 flex items-center justify-center text-gray-500"><Plus size={14} /></button>
-                                            </div>
-                                        </div>
+
+                                            <m.div
+                                                drag="x"
+                                                dragConstraints={{ left: -80, right: 0 }}
+                                                dragElastic={0.1}
+                                                className="flex items-center justify-between py-3 border-b border-gray-100/50 dark:border-slate-800/50 last:border-0 gap-3 bg-white dark:bg-slate-900 relative z-10"
+                                            >
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-extrabold text-[12px] text-gray-800 dark:text-gray-200 leading-tight uppercase truncate">
+                                                        {item.product_name || item.name}
+                                                    </div>
+                                                    <div className="text-[9px] font-black text-primary mt-1 flex items-center gap-2">
+                                                        <span>{formatNumber(item.price)}đ</span>
+                                                        <span className="w-1 h-1 rounded-full bg-primary/30"></span>
+                                                        <span className="text-gray-400">T.Tiền: {formatNumber(item.price * item.quantity)}đ</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center bg-gray-100 dark:bg-slate-800 rounded-xl p-0.5 border border-gray-200 dark:border-white/5 shrink-0">
+                                                    <button onClick={() => updateQuantity(idx, -1)} className="w-8 h-8 flex items-center justify-center text-primary active:scale-90 transition-transform"><Minus size={14} strokeWidth={3} /></button>
+                                                    <input
+                                                        ref={el => cartItemRefs.current[idx] = el}
+                                                        type="number"
+                                                        inputMode="numeric"
+                                                        value={item.quantity}
+                                                        onFocus={(e) => e.target.select()}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                setSearchTerm('');
+                                                                searchInputRef.current?.focus();
+                                                            }
+                                                        }}
+                                                        onChange={(e) => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            const newCart = [...cart];
+                                                            newCart[idx].quantity = val;
+                                                            if (val <= 0) {
+                                                                setItemToDelete(idx);
+                                                            } else {
+                                                                setCart(newCart);
+                                                            }
+                                                        }}
+                                                        className="text-xs font-black w-7 text-center bg-transparent outline-none dark:text-white"
+                                                    />
+                                                    <button onClick={() => updateQuantity(idx, 1)} className="w-8 h-8 flex items-center justify-center text-primary active:scale-90 transition-transform"><Plus size={14} strokeWidth={3} /></button>
+                                                </div>
+                                            </m.div>
+                                        </m.div>
                                     ))}
                                 </div>
                             )}
-                        </div>
 
-                        {/* Checkout Button */}
-                        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-gray-100 dark:border-slate-800 p-3 pt-4 px-6 shadow-2xl safe-area-bottom">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">TỔNG TIỀN</div>
-                                <div className="text-xl font-black text-primary">{formatNumber(totalAmount)}</div>
+                            {/* Checkout Final Action (Sticky when expanded) */}
+                            <div className={cn(
+                                "p-4 pt-2 transition-all",
+                                isCartExpanded ? "bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800" : "hidden"
+                            )}>
+                                <button
+                                    onClick={handleCheckout}
+                                    className="w-full bg-primary text-white py-4 rounded-3xl font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                >
+                                    <span>Xác Nhận và Lưu</span>
+                                    <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+                                        <ChevronRight size={18} />
+                                    </div>
+                                </button>
                             </div>
-                            <button
-                                onClick={handleCheckout}
-                                className="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
-                            >
-                                <span>Thanh toán</span>
-                                <ChevronRight size={18} />
-                            </button>
                         </div>
                     </m.div>
                 )}
@@ -360,6 +442,23 @@ export default function MobilePOS() {
                     </m.div>
                 )}
             </AnimatePresence>
-        </div>
+            <ConfirmModal
+                isOpen={itemToDelete !== null}
+                title={itemToDelete === 'all' ? "Xóa giỏ hàng?" : "Xóa sản phẩm?"}
+                message={itemToDelete === 'all'
+                    ? "Bạn có chắc chắn muốn xóa toàn bộ sản phẩm trong giỏ hàng không?"
+                    : `Bạn có chắc chắn muốn xóa "${cart[itemToDelete]?.product_name}" khỏi giỏ hàng?`}
+                type="danger"
+                onConfirm={() => {
+                    if (itemToDelete === 'all') {
+                        setCart([]);
+                    } else {
+                        setCart(cart.filter((_, i) => i !== itemToDelete));
+                    }
+                    setItemToDelete(null);
+                }}
+                onCancel={() => setItemToDelete(null)}
+            />
+        </div >
     );
 }

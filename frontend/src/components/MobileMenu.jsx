@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Home, Package, ShoppingCart, ListChecks, Settings, LogOut, X, Box } from 'lucide-react';
+import { Home, Package, ShoppingCart, ListChecks, Settings, LogOut, X } from 'lucide-react';
+import logo from '../assets/logo.png';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
@@ -38,8 +39,8 @@ export default function MobileMenu({ isOpen, onClose }) {
                         {/* Drawer Header */}
                         <div className="p-8 pb-6 flex flex-col">
                             <div className="flex justify-between items-start mb-6">
-                                <div className="p-3 bg-primary/10 rounded-2xl">
-                                    <Box className="text-primary" size={24} />
+                                <div className="h-16 w-auto -ml-2">
+                                    <img src={logo} alt="LyangPOS" className="h-full w-auto object-contain" />
                                 </div>
                                 <button onClick={onClose} className="p-2 text-gray-400">
                                     <X size={20} />
