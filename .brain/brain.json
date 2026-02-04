@@ -1,0 +1,43 @@
+{
+    "meta": {
+        "schema_version": "1.1.0",
+        "awf_version": "3.3.0"
+    },
+    "project": {
+        "name": "LyangPOS",
+        "type": "Point of Sale System",
+        "status": "In Development - Mobile UI Enhancement Phase"
+    },
+    "tech_stack": {
+        "frontend": {
+            "framework": "React 19",
+            "bundler": "Vite",
+            "styling": "Tailwind CSS 4",
+            "state_management": "React Query (TanStack)",
+            "animation": "Framer Motion",
+            "icons": "Lucide React",
+            "router": "React Router Dom 7"
+        },
+        "backend": {
+            "framework": "Python Flask",
+            "database": "SQLite/PostgreSQL (Agnostic)",
+            "orm": "SQLAlchemy"
+        }
+    },
+    "ui_conventions": {
+        "theme": "Glassmorphism / Premium Minimalist",
+        "mobile_nav": "Hamburger Drawer (MobileMenu)",
+        "mobile_pos_layout": "Horizontal Sleek Card List",
+        "animations": "Framer Motion (Slide, Fade, Scale)"
+    },
+    "knowledge_items": {
+        "patterns": [
+            "Eternal State: Using localStorage to persist cart and search inputs across sessions.",
+            "Glassmorphism: backdrop-blur-xl with subtle borders for high-end look."
+        ],
+        "gotchas": [
+            "Lucide icons must be imported explicitly; missing imports cause white screen crashes.",
+            "Mobile viewport height: Use 100dvh for reliable full-screen layouts."
+        ]
+    }
+}

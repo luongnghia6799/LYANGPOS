@@ -18,11 +18,29 @@ export default function MobilePurchase() {
     const partners = partnersData || [];
 
     const [isCartExpanded, setIsCartExpanded] = useState(true);
-    const [cart, setCart] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [cart, setCart] = useState(() => {
+        const saved = localStorage.getItem('mobile_purchase_cart');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem('mobile_purchase_search') || '');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [toast, setToast] = useState(null);
-    const [selectedPartner, setSelectedPartner] = useState(null);
+    const [selectedPartner, setSelectedPartner] = useState(() => {
+        const saved = localStorage.getItem('mobile_purchase_partner');
+        return saved ? JSON.parse(saved) : null;
+    });
+
+    useEffect(() => {
+        localStorage.setItem('mobile_purchase_cart', JSON.stringify(cart));
+    }, [cart]);
+
+    useEffect(() => {
+        localStorage.setItem('mobile_purchase_search', searchTerm);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        localStorage.setItem('mobile_purchase_partner', JSON.stringify(selectedPartner));
+    }, [selectedPartner]);
     const [showPartnerSelector, setShowPartnerSelector] = useState(false);
 
     const searchInputRef = useRef(null);
@@ -154,29 +172,43 @@ export default function MobilePurchase() {
             </div>
 
             {/* Product Grid */}
-            <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-3 content-start pb-64">
+            {/* Product Grid - Horizontal Rectangles */}
+            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5 content-start pb-64">
                 {filteredProducts.map(p => (
                     <m.div
                         key={p.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        whileTap={{ scale: 0.96 }}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => addToCart(p)}
-                        className="bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden group"
+                        className="bg-white dark:bg-slate-900/60 backdrop-blur-sm rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-white/5 flex items-center justify-between min-h-[70px] relative overflow-hidden group active:bg-gray-50 dark:active:bg-white/5 transition-colors"
                     >
-                        <div className="absolute top-0 right-0 p-1.5 opacity-0 group-active:opacity-100 transition-opacity">
-                            <div className="bg-[#4a7c59]/10 rounded-full p-1 text-[#4a7c59]">
-                                <Plus size={12} strokeWidth={4} />
+                        <div className="flex-1 min-w-0 pr-4">
+                            <div className="flex items-center gap-2 mb-1">
+                                <div className="w-1 h-3 bg-[#4a7c59] rounded-full"></div>
+                                <div className="font-black text-[12px] text-gray-800 dark:text-gray-100 uppercase tracking-tight truncate leading-none">
+                                    {p.name}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter bg-[#4a7c59]/5 dark:bg-[#4a7c59]/10 px-2 py-0.5 rounded-md text-[#4a7c59]">
+                                    {p.unit}
+                                </div>
+                                <div className="text-[10px] font-black text-gray-400 tracking-tight">
+                                    Mã: {p.code || '---'}
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <div className="font-bold text-[13px] text-gray-800 dark:text-gray-100 line-clamp-2 leading-tight">{p.name}</div>
-                            <div className="text-[10px] text-gray-400 mt-1 font-bold uppercase tracking-tighter">{p.unit}</div>
-                        </div>
-                        <div className="flex justify-between items-end mt-2">
-                            <span className="font-black text-[#4a7c59] text-sm">{formatNumber(p.cost_price)}</span>
-                            <div className="w-7 h-7 bg-[#4a7c59] text-white rounded-lg flex items-center justify-center shadow-lg shadow-[#4a7c59]/30">
-                                <Plus size={16} strokeWidth={3} />
+
+                        <div className="flex items-center gap-3">
+                            <div className="flex flex-col items-end">
+                                <span className="font-black text-[#4a7c59] text-[14px] leading-none tracking-tight">
+                                    {formatNumber(p.cost_price)}
+                                </span>
+                                <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">GIA / {p.unit}</span>
+                            </div>
+                            <div className="w-9 h-9 bg-[#4a7c59]/10 dark:bg-[#4a7c59]/20 text-[#4a7c59] rounded-xl flex items-center justify-center group-active:scale-90 transition-transform">
+                                <Plus size={20} strokeWidth={3} />
                             </div>
                         </div>
                     </m.div>

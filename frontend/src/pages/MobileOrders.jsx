@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { m, AnimatePresence } from 'framer-motion';
-import { Clock, User, Menu, ListChecks, ChevronLeft, Check, Filter, Layers, ArrowRight } from 'lucide-react';
+import { Clock, User, Menu, ListChecks, ChevronLeft, Check, Filter, Layers, ArrowRight, ShoppingCart } from 'lucide-react';
 import { formatNumber } from '../lib/utils';
 import MobileMenu from '../components/MobileMenu';
 import { cn } from '../lib/utils';
@@ -168,7 +168,7 @@ export default function MobileOrders() {
 
                         <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-32">
                             <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Danh sách mặt hàng</div>
-                            {selectedOrder.details.map((detail, idx) => (
+                            {(selectedOrder.details || []).map((detail, idx) => (
                                 <m.div
                                     key={idx}
                                     initial={{ opacity: 0, x: -10 }}
@@ -184,7 +184,7 @@ export default function MobileOrders() {
                                             {detail.product_name}
                                         </div>
                                         <div className="text-[10px] font-bold text-gray-400 mt-1 uppercase">
-                                            {formatNumber(detail.price)} / {detail.unit}
+                                            {formatNumber(detail.price)} / {detail.product_unit}
                                         </div>
                                     </div>
                                     <label className="flex-shrink-0 relative">
