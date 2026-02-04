@@ -192,24 +192,21 @@ class OrderDetail(db.Model):
     product = db.relationship('Product', lazy='selectin')
 
     def to_dict(self):
-        # Optimization: Use already loaded product/combo_items if available
-        p = self.product
-        p_dict = p.to_dict() if p else {}
-        
+        p_dict = self.product.to_dict() if self.product else {}
         return {
             'id': self.id,
             'product_id': self.product_id,
-            'product_name': self.product_name_override or (p.name if p else 'Sản phẩm đã xóa'),
-            'product_unit': p.unit if p else 'ĐV',
-            'secondary_unit': p.secondary_unit if p else '',
-            'multiplier': p.multiplier if p else 1,
+            'product_name': self.product_name_override or (self.product.name if self.product else 'Sản phẩm đã xóa'),
+            'product_unit': self.product.unit if self.product else 'ĐV',
+            'secondary_unit': self.product.secondary_unit if self.product else '',
+            'multiplier': self.product.multiplier if self.product else 1,
             'quantity': self.quantity,
             'price': self.price,
             'cost_price': p_dict.get('cost_price', 0),
             'stock': p_dict.get('current_stock', 0),
             'active_ingredient': p_dict.get('active_ingredient', ''),
-            'is_combo': p.is_combo if p else False,
-            'combo_items': [ci.to_dict() for ci in p.combo_items] if (p and p.is_combo) else []
+            'is_combo': self.product.is_combo if self.product else False,
+            'combo_items': [ci.to_dict() for ci in self.product.combo_items] if (self.product and self.product.is_combo) else []
         }
 class CustomerPrice(db.Model):
     id = db.Column(db.Integer, primary_key=True)

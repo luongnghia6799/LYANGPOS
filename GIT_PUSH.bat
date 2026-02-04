@@ -1,19 +1,17 @@
 @echo off
-set /p msg="Nhap commit message (mac dinh: 'Update code support Turso'): "
-if "%msg%"=="" set msg="Update code support Turso"
+set /p commit_msg="Nhap message commit (bam Enter de dung 'auto-sync'): "
+if "%commit_msg%"=="" set commit_msg=auto-sync
 
 echo.
-echo [1/3] Adding changes...
+echo [+] Dang add file...
 git add .
 
-echo.
-echo [2/3] Committing with message: %msg%
-git commit -m "%msg%"
+echo [+] Dang commit: "%commit_msg%"
+git commit -m "%commit_msg%"
+
+echo [+] Dang push len GitHub...
+git push origin main
 
 echo.
-echo [3/3] Pushing to GitHub...
-git push
-
-echo.
-echo Done! App cua anh dang duoc deploy tren Render...
+echo [OK] Da xong!
 pause
