@@ -24,6 +24,8 @@ const InvoiceDesigner = lazy(() => import('./pages/InvoiceDesigner'));
 const BankManager = lazy(() => import('./pages/BankManager'));
 const Welcome = lazy(() => import('./pages/Welcome'));
 const MobilePOS = lazy(() => import('./pages/MobilePOS'));
+const MobilePurchase = lazy(() => import('./pages/MobilePurchase'));
+const MobileOrders = lazy(() => import('./pages/MobileOrders'));
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(sessionStorage.getItem('user') || 'null');
@@ -40,17 +42,26 @@ const AppLayout = () => {
   // Auto-redirect to mobile POS if on root index and mobile device
   useEffect(() => {
     if (isMobile && location.pathname === '/') {
-      // We use a small timeout or direct check. 
-      // Note: Navigate component is better for rendering flow, but imperative works here too.
+      // Handled by Route below
     }
   }, [isMobile, location.pathname]);
+
+  const isMobilePage = ['/mobile-pos', '/mobile-purchase', '/mobile-orders'].includes(location.pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ProtectedRoute>
-        {/* Conditional Layout: Don't show Main Layout sidebar for MobilePOS page */}
-        {location.pathname === '/mobile-pos' ? (
-          <PageWrapper><Suspense fallback={<LoadingOverlay isVisible={true} />}><MobilePOS /></Suspense></PageWrapper>
+        {/* Conditional Layout: Don't show Main Layout sidebar for Mobile pages */}
+        {isMobilePage ? (
+          <PageWrapper>
+            <Suspense fallback={<LoadingOverlay isVisible={true} />}>
+              <Routes location={location} key={location.pathname}>
+                <Route path="/mobile-pos" element={<MobilePOS />} />
+                <Route path="/mobile-purchase" element={<MobilePurchase />} />
+                <Route path="/mobile-orders" element={<MobileOrders />} />
+              </Routes>
+            </Suspense>
+          </PageWrapper>
         ) : (
           <Layout>
             <Suspense fallback={<LoadingOverlay isVisible={true} message="Đang tải..." />}>
@@ -58,6 +69,8 @@ const AppLayout = () => {
                 <Routes location={location} key={location.pathname}>
                   <Route path="/" element={isMobile ? <Navigate to="/mobile-pos" /> : <PageWrapper><Dashboard /></PageWrapper>} />
                   <Route path="/mobile-pos" element={<PageWrapper><MobilePOS /></PageWrapper>} />
+                  <Route path="/mobile-purchase" element={<PageWrapper><MobilePurchase /></PageWrapper>} />
+                  <Route path="/mobile-orders" element={<PageWrapper><MobileOrders /></PageWrapper>} />
                   <Route path="/pos" element={<PageWrapper><POS /></PageWrapper>} />
                   <Route path="/purchase" element={<PageWrapper><Purchase /></PageWrapper>} />
                   <Route path="/history" element={<PageWrapper><History /></PageWrapper>} />
