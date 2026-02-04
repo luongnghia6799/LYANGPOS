@@ -153,17 +153,18 @@ if database_url:
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     
     # Support for Turso (libsql)
-    # Syntax for sqlalchemy-libsql: sqlite+libsql://URL?auth_token=TOKEN&secure=true
+    # Syntax for sqlalchemy-libsql: sqlite+libsql://URL?authToken=TOKEN&secure=true
     if database_url.startswith("libsql://"):
         if auth_token:
             # Construct the SQLAlchemy-compatible URL for Turso
             db_path = database_url.replace("libsql://", "", 1)
-            # Ensure it ends with / if it doesn't have one before params
             if not db_path.endswith('/'):
                 db_path += '/'
-            database_url = f"sqlite+libsql://{db_path}?auth_token={auth_token}&secure=true"
+            # Change to authToken (case sensitive in some versions)
+            database_url = f"sqlite+libsql://{db_path}?authToken={auth_token}&secure=true"
+            app.logger.info(f"Database: Turso detected (Token length: {len(auth_token)})")
         else:
-            # Fallback to local sqlite if no token
+            app.logger.warning("Database: Turso URL detected but DATABASE_AUTH_TOKEN is missing!")
             database_url = database_url.replace("libsql://", "sqlite:///", 1)
             
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
