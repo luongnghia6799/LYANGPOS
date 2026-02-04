@@ -143,12 +143,26 @@ logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
 app.logger.info("LyangPOS Start")
 
 # Database Configuration
-# Priority: Env Var (Render/Supabase) > Local SQLite
+# Priority: Env Var (Render/Turso/Supabase) > Local SQLite
 database_url = os.environ.get('DATABASE_URL')
+auth_token = os.environ.get('DATABASE_AUTH_TOKEN')
+
 if database_url:
     # Fix for SQLAlchemy: Render provides 'postgres://', SQLAlchemy needs 'postgresql://'
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
+    
+    # Support for Turso (libsql)
+    # Syntax for sqlalchemy-libsql: libsql://URL?auth_token=TOKEN
+    if database_url.startswith("libsql://"):
+        if auth_token:
+            # Construct the SQLAlchemy-compatible URL for Turso
+            db_path = database_url.replace("libsql://", "", 1)
+            database_url = f"libsql://{db_path}?auth_token={auth_token}"
+        else:
+            # Fallback to local sqlite if no token
+            database_url = database_url.replace("libsql://", "sqlite:///", 1)
+            
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{get_storage_path(os.path.join("instance", "easypos.db"))}'

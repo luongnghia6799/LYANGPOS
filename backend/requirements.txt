@@ -5,3 +5,5 @@ flask-sqlalchemy
 flask-cors
 gunicorn
 psycopg2-binary
+libsql-client
+sqlalchemy-libsql
