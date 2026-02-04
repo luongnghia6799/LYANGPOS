@@ -2,86 +2,99 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
-import { ArrowLeft, Printer, Lock, Globe, Store, Moon, Sun, ChevronRight, Monitor, Menu } from 'lucide-react';
+import { Printer, Lock, Globe, Store, Moon, ChevronRight, Monitor, Menu, Github } from 'lucide-react';
 import MobileMenu from '../components/MobileMenu';
+import MobileBottomNav from '../components/MobileBottomNav';
 import { cn } from '../lib/utils';
 
 export default function MobileSettings() {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [theme, setTheme] = useState('light'); // Mock theme state
 
-    const SettingItem = ({ icon: Icon, label, value, onClick, color = 'text-gray-600' }) => (
-        <button
+    const SettingItem = ({ icon: Icon, label, value, onClick, colorClass = "bg-gray-100 text-gray-500" }) => (
+        <m.button
+            whileTap={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
             onClick={onClick}
-            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 active:bg-gray-50 last:border-0"
+            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-gray-50 dark:border-slate-800 last:border-0 transition-colors"
         >
-            <div className="flex items-center gap-3">
-                <div className={cn("w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center", color)}>
-                    <Icon size={18} />
+            <div className="flex items-center gap-4">
+                <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm", colorClass)}>
+                    <Icon size={20} />
                 </div>
-                <span className="font-medium text-gray-700 dark:text-gray-200">{label}</span>
+                <div className="flex flex-col items-start">
+                    <span className="font-black text-xs uppercase tracking-wider text-gray-700 dark:text-gray-200">{label}</span>
+                    {value && <span className="text-[10px] font-bold text-gray-400 mt-0.5">{value}</span>}
+                </div>
             </div>
-            <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">{value}</span>
-                <ChevronRight size={16} className="text-gray-400" />
-            </div>
-        </button>
+            <ChevronRight size={18} className="text-gray-300 dark:text-gray-600" />
+        </m.button>
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-20">
+        <div className="h-[100dvh] bg-gray-50 dark:bg-slate-950 flex flex-col overflow-hidden font-sans">
             <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
             {/* Header */}
-            <div className="bg-white dark:bg-slate-800 p-4 flex items-center gap-4 shadow-sm sticky top-0 z-20">
-                <button onClick={() => setIsMenuOpen(true)} className="text-gray-600 dark:text-gray-300">
+            <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800 p-4 flex items-center justify-between z-20">
+                <button onClick={() => setIsMenuOpen(true)} className="p-2 -ml-2 text-gray-400">
                     <Menu size={24} />
                 </button>
-                <h1 className="font-bold text-lg flex-1">Cài Đặt</h1>
+                <div className="flex flex-col items-center">
+                    <h1 className="font-black text-sm uppercase tracking-[0.2em] text-gray-800 dark:text-gray-100">CÀI ĐẶT</h1>
+                    <div className="text-[10px] font-bold text-gray-400 mt-0.5 tracking-tighter">Cấu hình hệ thống</div>
+                </div>
+                <div className="w-8"></div>
             </div>
 
-            <div className="p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
 
-                {/* Store Info */}
-                <div>
-                    <div className="text-xs font-bold text-gray-400 uppercase mb-2 pl-2">Cửa hàng</div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <SettingItem icon={Store} label="Thông tin cửa hàng" value="Lyang Store" color="text-blue-500" />
-                        <SettingItem icon={Globe} label="Ngôn ngữ" value="Tiếng Việt" color="text-indigo-500" />
+                {/* Profile Section */}
+                <div className="flex flex-col items-center py-6 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-green-300 p-1 mb-4">
+                        <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-primary font-black text-2xl">
+                            LY
+                        </div>
+                    </div>
+                    <span className="font-black text-lg text-gray-800 dark:text-gray-100 italic">Lyang Store</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Admin Account</span>
+                </div>
+
+                {/* Groups */}
+                <div className="space-y-6">
+                    <div>
+                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-2 pl-2">Vận hành</div>
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-slate-800">
+                            <SettingItem icon={Store} label="Thông tin cửa hàng" value="Sửa tên, địa chỉ, logo" colorClass="bg-blue-50 text-blue-500" />
+                            <SettingItem icon={Printer} label="Máy in" value="Cài đặt khổ giấy K80/K57" colorClass="bg-orange-50 text-orange-500" />
+                            <SettingItem icon={Globe} label="Khu vực & Ngôn ngữ" value="Tiếng Việt / VNĐ" colorClass="bg-indigo-50 text-indigo-500" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-2 pl-2">Bảo mật & Giao diện</div>
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-slate-800">
+                            <SettingItem icon={Moon} label="Giao diện (Dark Mode)" value="Tự động theo hệ thống" colorClass="bg-purple-50 text-purple-500" />
+                            <SettingItem icon={Lock} label="Mật khẩu" value="Thay đổi mã PIN truy cập" colorClass="bg-red-50 text-red-500" />
+                        </div>
                     </div>
                 </div>
 
-                {/* Device & Printer */}
-                <div>
-                    <div className="text-xs font-bold text-gray-400 uppercase mb-2 pl-2">Thiết bị</div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <SettingItem icon={Printer} label="Máy in hóa đơn" value="Chưa kết nối" color="text-orange-500" />
-                        <SettingItem icon={Moon} label="Giao diện" value="Sáng" color="text-purple-500" />
-                    </div>
-                </div>
-
-                {/* Account */}
-                <div>
-                    <div className="text-xs font-bold text-gray-400 uppercase mb-2 pl-2">Tài khoản</div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <SettingItem icon={Lock} label="Đổi mật khẩu" color="text-red-500" />
-                    </div>
-                </div>
-
-                {/* Desktop Mode CTA */}
+                {/* Hero Action */}
                 <button
                     onClick={() => navigate('/')}
-                    className="w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white p-4 rounded-xl flex items-center justify-center gap-3 font-bold shadow-lg shadow-gray-400/20 active:scale-95 transition-transform"
+                    className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 p-5 rounded-3xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs shadow-xl active:scale-[0.98] transition-all"
                 >
-                    <Monitor size={20} />
-                    Chuyển sang giao diện Máy tính
+                    <Monitor size={18} />
+                    Chuyển sang Máy tính
                 </button>
 
-                <div className="text-center text-xs text-gray-400 pt-4">
-                    Phiên bản Mobile v1.0.2
+                <div className="flex flex-col items-center gap-1 opacity-20 py-4">
+                    <Github size={16} />
+                    <span className="text-[10px] font-bold">Lyang POS v1.1.0 • Stable Build</span>
                 </div>
             </div>
+
+            <MobileBottomNav />
         </div>
     );
 }
