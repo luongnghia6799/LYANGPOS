@@ -8,6 +8,8 @@ import { queryClient } from './lib/queryClient';
 import FontLoader from './components/FontLoader';
 import LoadingOverlay from './components/LoadingOverlay';
 
+import MobileBottomNav from './components/MobileBottomNav';
+
 // Lazy load pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const POS = lazy(() => import('./pages/POS'));
@@ -52,18 +54,19 @@ const AppLayout = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ProtectedRoute>
-        {/* Conditional Layout: Don't show Main Layout sidebar for Mobile pages */}
         {isMobilePage ? (
-          <PageWrapper>
+          <div className="w-full h-full relative">
             <Suspense fallback={<LoadingOverlay isVisible={true} />}>
-              <Routes location={location} key={location.pathname}>
-                <Route path="/mobile-pos" element={<MobilePOS />} />
-                <Route path="/mobile-purchase" element={<MobilePurchase />} />
-                <Route path="/mobile-orders" element={<MobileOrders />} />
-                <Route path="/mobile-settings" element={<MobileSettings />} />
-              </Routes>
+              <AnimatePresence mode="wait">
+                <Routes location={location} key={location.pathname}>
+                  <Route path="/mobile-pos" element={<PageWrapper><MobilePOS /></PageWrapper>} />
+                  <Route path="/mobile-purchase" element={<PageWrapper><MobilePurchase /></PageWrapper>} />
+                  <Route path="/mobile-orders" element={<PageWrapper><MobileOrders /></PageWrapper>} />
+                  <Route path="/mobile-settings" element={<PageWrapper><MobileSettings /></PageWrapper>} />
+                </Routes>
+              </AnimatePresence>
             </Suspense>
-          </PageWrapper>
+          </div>
         ) : (
           <Layout>
             <Suspense fallback={<LoadingOverlay isVisible={true} message="Đang tải..." />}>

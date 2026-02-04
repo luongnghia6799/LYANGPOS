@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { m, AnimatePresence } from 'framer-motion';
@@ -9,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import { useProductData, usePartnerData } from '../queries/useProductData';
 import MobileMenu from '../components/MobileMenu';
 import MobilePartnerSelector from '../components/MobilePartnerSelector';
-import MobileBottomNav from '../components/MobileBottomNav';
 
 export default function MobilePurchase() {
     const navigate = useNavigate();
@@ -19,6 +17,7 @@ export default function MobilePurchase() {
     const products = productsData || [];
     const partners = partnersData || [];
 
+    const [isCartExpanded, setIsCartExpanded] = useState(true);
     const [cart, setCart] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -66,6 +65,7 @@ export default function MobilePurchase() {
                 cartItemRefs.current[newIdx]?.select();
             }, 100);
         }
+        setIsCartExpanded(true); // Auto expand when adding
         setToast({ message: `Đã thêm ${product.name}`, type: 'success' });
         setTimeout(() => setToast(null), 1500);
     };
@@ -138,26 +138,23 @@ export default function MobilePurchase() {
             </div>
 
             {/* Sticky Search */}
-            <div className="bg-white dark:bg-slate-900 shadow-sm z-10 sticky top-0 border-b border-gray-100 dark:border-slate-800 p-3">
-                <div className="relative">
-                    <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                    <input
-                        ref={searchInputRef}
-                        className="w-full bg-gray-100 dark:bg-slate-800 rounded-xl py-2 pl-10 pr-4 outline-none font-medium text-sm dark:text-white border border-transparent focus:border-[#4a7c59]/30 transition-all font-sans"
-                        placeholder="Tìm mặt hàng nhập..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
-                    {searchTerm && (
-                        <button className="absolute right-3 top-2.5 text-gray-400" onClick={() => setSearchTerm('')}>
-                            <X size={18} />
-                        </button>
-                    )}
+            <div className="bg-white dark:bg-slate-900 shadow-sm z-10 sticky top-0 border-b border-gray-100 dark:border-slate-800">
+                <div className="p-3">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                        <input
+                            ref={searchInputRef}
+                            className="w-full bg-gray-100 dark:bg-slate-800 rounded-xl py-2 pl-10 pr-4 outline-none font-medium text-sm dark:text-white border border-transparent focus:border-[#4a7c59]/30 transition-all"
+                            placeholder="Tìm sản phẩm nhập..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* Product Grid */}
-            <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-3 content-start pb-40">
+            <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-3 content-start pb-64">
                 {filteredProducts.map(p => (
                     <m.div
                         key={p.id}
@@ -167,9 +164,14 @@ export default function MobilePurchase() {
                         onClick={() => addToCart(p)}
                         className="bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden group"
                     >
+                        <div className="absolute top-0 right-0 p-1.5 opacity-0 group-active:opacity-100 transition-opacity">
+                            <div className="bg-[#4a7c59]/10 rounded-full p-1 text-[#4a7c59]">
+                                <Plus size={12} strokeWidth={4} />
+                            </div>
+                        </div>
                         <div>
                             <div className="font-bold text-[13px] text-gray-800 dark:text-gray-100 line-clamp-2 leading-tight">{p.name}</div>
-                            <div className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-tighter">{p.unit}</div>
+                            <div className="text-[10px] text-gray-400 mt-1 font-bold uppercase tracking-tighter">{p.unit}</div>
                         </div>
                         <div className="flex justify-between items-end mt-2">
                             <span className="font-black text-[#4a7c59] text-sm">{formatNumber(p.cost_price)}</span>
@@ -181,63 +183,76 @@ export default function MobilePurchase() {
                 ))}
             </div>
 
-            {/* Bottom Cart Action (Above Bottom Nav) */}
+            {/* Bottom Cart Action */}
             <AnimatePresence>
                 {cart.length > 0 && (
                     <m.div
                         initial={{ y: '100%' }}
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
-                        className="fixed bottom-16 left-0 right-0 z-30 flex flex-col"
+                        className="fixed bottom-0 left-0 right-0 z-30 flex flex-col"
                     >
                         {/* Cart Items List Container */}
-                        <div className="mx-3 mb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden max-h-[35vh] flex flex-col">
-                            <div className="p-3 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
-                                <div className="flex items-center gap-2 text-[#4a7c59]">
+                        <div className="mx-3 mb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col transition-all">
+                            <div
+                                onClick={() => setIsCartExpanded(!isCartExpanded)}
+                                className="p-3 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50 cursor-pointer active:bg-gray-100 dark:active:bg-slate-800"
+                            >
+                                <div className="flex items-center gap-2">
                                     <div className="bg-[#4a7c59] p-1.5 rounded-lg text-white">
-                                        <Package size={14} />
+                                        <ShoppingCart size={14} />
                                     </div>
-                                    <span className="font-black text-xs uppercase tracking-wider">Hóa đơn ({cart.length})</span>
+                                    <div className="flex flex-col">
+                                        <span className="font-black text-[10px] uppercase tracking-wider text-[#4a7c59]">Giỏ hàng ({cart.length})</span>
+                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{isCartExpanded ? 'Bấm để thu gọn' : 'Bấm để xem chi tiết'}</span>
+                                    </div>
                                 </div>
-                                <button onClick={() => setCart([])} className="text-[10px] font-bold text-red-500 uppercase">Hủy</button>
-                            </div>
-                            <div className="overflow-y-auto">
-                                {cart.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between items-center p-3 border-b border-gray-50 dark:border-slate-800/50 last:border-0">
-                                        <div className="flex-1 pr-2">
-                                            <div className="text-xs font-bold truncate dark:text-gray-200">{item.product_name}</div>
-                                            <div className="text-[10px] text-gray-500">{formatNumber(item.price)}</div>
-                                        </div>
-                                        <div className="flex items-center gap-2.5 bg-gray-100 dark:bg-slate-800 rounded-xl p-0.5">
-                                            <button onClick={() => updateQuantity(idx, -1)} className="w-8 h-8 flex items-center justify-center text-gray-500"><Minus size={14} /></button>
-                                            <input
-                                                ref={el => cartItemRefs.current[idx] = el}
-                                                type="number"
-                                                inputMode="numeric"
-                                                value={item.quantity}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        setSearchTerm('');
-                                                        searchInputRef.current?.focus();
-                                                    }
-                                                }}
-                                                onChange={(e) => {
-                                                    const val = parseInt(e.target.value) || 0;
-                                                    const newCart = [...cart];
-                                                    newCart[idx].quantity = val;
-                                                    if (val <= 0) {
-                                                        setCart(cart.filter((_, i) => i !== idx));
-                                                    } else {
-                                                        setCart(newCart);
-                                                    }
-                                                }}
-                                                className="text-xs font-black w-10 text-center bg-transparent outline-none dark:text-white"
-                                            />
-                                            <button onClick={() => updateQuantity(idx, 1)} className="w-8 h-8 flex items-center justify-center text-gray-500"><Plus size={14} /></button>
-                                        </div>
+                                <div className="flex items-center gap-4">
+                                    <button onClick={(e) => { e.stopPropagation(); setCart([]); }} className="text-[10px] font-bold text-red-500 uppercase">Xóa hết</button>
+                                    <div className={cn("transition-transform duration-300", isCartExpanded ? "rotate-180" : "rotate-0")}>
+                                        <ChevronRight size={16} className="rotate-90 text-gray-400" />
                                     </div>
-                                ))}
+                                </div>
                             </div>
+                            {isCartExpanded && (
+                                <div className="overflow-y-auto max-h-[25vh]">
+                                    {cart.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-start p-3 border-b border-gray-50 dark:border-slate-800/50 last:border-0 gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-xs font-bold dark:text-gray-200 leading-tight break-words">{item.product_name}</div>
+                                                <div className="text-[10px] text-gray-400 font-bold mt-0.5">{formatNumber(item.price)}</div>
+                                            </div>
+                                            <div className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 rounded-xl p-0.5 shrink-0 w-[110px] justify-between">
+                                                <button onClick={() => updateQuantity(idx, -1)} className="w-8 h-8 flex items-center justify-center text-gray-500"><Minus size={14} /></button>
+                                                <input
+                                                    ref={el => cartItemRefs.current[idx] = el}
+                                                    type="number"
+                                                    inputMode="numeric"
+                                                    value={item.quantity}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            setSearchTerm('');
+                                                            searchInputRef.current?.focus();
+                                                        }
+                                                    }}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value) || 0;
+                                                        const newCart = [...cart];
+                                                        newCart[idx].quantity = val;
+                                                        if (val <= 0) {
+                                                            setCart(cart.filter((_, i) => i !== idx));
+                                                        } else {
+                                                            setCart(newCart);
+                                                        }
+                                                    }}
+                                                    className="text-xs font-black w-8 text-center bg-transparent outline-none dark:text-white"
+                                                />
+                                                <button onClick={() => updateQuantity(idx, 1)} className="w-8 h-8 flex items-center justify-center text-gray-500"><Plus size={14} /></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Checkout Button */}
@@ -258,7 +273,6 @@ export default function MobilePurchase() {
                 )}
             </AnimatePresence>
 
-            <MobileBottomNav />
             <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
             <AnimatePresence>

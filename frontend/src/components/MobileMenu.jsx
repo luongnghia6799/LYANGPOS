@@ -62,14 +62,14 @@ export default function MobileMenu({ isOpen, onClose }) {
                                         className={cn(
                                             "flex items-center gap-4 w-full p-4 rounded-2xl transition-all relative overflow-hidden group",
                                             isActive
-                                                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                                                : "hover:bg-gray-50 dark:hover:bg-slate-900 text-gray-600 dark:text-gray-400"
+                                                ? "bg-primary text-white shadow-xl shadow-primary/30"
+                                                : "hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300 border border-transparent hover:border-gray-100 dark:hover:border-white/10"
                                         )}
                                     >
                                         <item.icon size={20} className={cn(isActive ? "text-white" : "text-gray-400 group-hover:text-primary")} />
                                         <div className="flex flex-col items-start">
                                             <span className="font-black text-xs uppercase tracking-wider">{item.label}</span>
-                                            {item.sub && <span className={cn("text-[9px] font-bold opacity-60", isActive ? "text-white" : "text-gray-400")}>{item.sub}</span>}
+                                            {item.sub && <span className={cn("text-[8px] font-bold opacity-60 uppercase tracking-tighter", isActive ? "text-white" : "text-gray-400")}>{item.sub}</span>}
                                         </div>
                                         {isActive && (
                                             <m.div

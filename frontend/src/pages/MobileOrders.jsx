@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { m, AnimatePresence } from 'framer-motion';
 import { Clock, User, Menu, ListChecks, ChevronLeft, Check, Filter, Layers, ArrowRight } from 'lucide-react';
 import { formatNumber } from '../lib/utils';
 import MobileMenu from '../components/MobileMenu';
-import MobileBottomNav from '../components/MobileBottomNav';
 import { cn } from '../lib/utils';
 
 export default function MobileOrders() {
@@ -234,8 +232,6 @@ export default function MobileOrders() {
                     </m.div>
                 )}
             </AnimatePresence>
-
-            <MobileBottomNav />
 
             {/* Premium Toast Container */}
             <AnimatePresence>

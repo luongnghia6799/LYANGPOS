@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
 import { Printer, Lock, Globe, Store, Moon, ChevronRight, Monitor, Menu, Github } from 'lucide-react';
 import MobileMenu from '../components/MobileMenu';
-import MobileBottomNav from '../components/MobileBottomNav';
 import { cn } from '../lib/utils';
 
 export default function MobileSettings() {
@@ -93,8 +91,6 @@ export default function MobileSettings() {
                     <span className="text-[10px] font-bold">Lyang POS v1.1.0 • Stable Build</span>
                 </div>
             </div>
-
-            <MobileBottomNav />
         </div>
     );
 }
