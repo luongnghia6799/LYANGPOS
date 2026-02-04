@@ -153,21 +153,23 @@ if database_url:
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     
     # Support for Turso (libsql)
-    # Syntax for sqlalchemy-libsql: sqlite+libsql://URL?authToken=TOKEN&secure=true
     if database_url.startswith("libsql://"):
         if auth_token:
-            # Construct the SQLAlchemy-compatible URL for Turso
             db_path = database_url.replace("libsql://", "", 1)
             if not db_path.endswith('/'):
                 db_path += '/'
-            # Change to authToken (case sensitive in some versions)
-            database_url = f"sqlite+libsql://{db_path}?authToken={auth_token}&secure=true"
-            app.logger.info(f"Database: Turso detected (Token length: {len(auth_token)})")
-        else:
-            app.logger.warning("Database: Turso URL detected but DATABASE_AUTH_TOKEN is missing!")
-            database_url = database_url.replace("libsql://", "sqlite:///", 1)
             
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+            # Using engine_options is safer than URL params for long tokens
+            app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite+libsql://{db_path}?secure=true"
+            app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+                "connect_args": {"auth_token": auth_token}
+            }
+            app.logger.info(f"Database: Turso configured with direct auth_token (Length: {len(auth_token)})")
+        else:
+            app.logger.warning("Database: Turso URL detected but auth_token is missing!")
+            app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("libsql://", "sqlite:///", 1)
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{get_storage_path(os.path.join("instance", "easypos.db"))}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
