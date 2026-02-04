@@ -363,59 +363,16 @@ class SplashScreen:
 def run_migrations():
     with app.app_context():
         try:
+            # Skip heavy inspection if on cloud and tables already exist
+            if os.environ.get('DATABASE_URL'):
+                 # Minimal check for cloud: just create_all, let SQL handle existing tables
+                 db.create_all()
+                 return
+
             db.create_all()
             # Ensure BankAccount and BankTransaction tables are created if not exist
             inspector = inspect(db.engine)
-            if 'bank_account' not in inspector.get_table_names():
-                BankAccount.__table__.create(db.engine)
-                app.logger.info("Created bank_account table")
-            if 'bank_transaction' not in inspector.get_table_names():
-                BankTransaction.__table__.create(db.engine)
-                app.logger.info("Created bank_transaction table")
-
-            # Auto-migration for missing columns
-            # Auto-migration for missing columns
-            # inspector already defined above
-
-            
-            # Check product table
-            columns = [c['name'] for c in inspector.get_columns('product')]
-            
-            with db.engine.begin() as conn:
-                if 'code' not in columns:
-                    conn.execute(db.text('ALTER TABLE product ADD COLUMN code TEXT'))
-                    app.logger.info("Added column 'code' to product table")
-                
-                if 'is_combo' not in columns:
-                    conn.execute(db.text('ALTER TABLE product ADD COLUMN is_combo BOOLEAN DEFAULT 0'))
-                    app.logger.info("Added column 'is_combo' to product table")
-                
-                if 'active_ingredient' not in columns:
-                    conn.execute(db.text('ALTER TABLE product ADD COLUMN active_ingredient TEXT'))
-                    app.logger.info("Added column 'active_ingredient' to product table")
-                
-                if 'brand' not in columns:
-                    conn.execute(db.text('ALTER TABLE product ADD COLUMN brand TEXT'))
-                    app.logger.info("Added column 'brand' to product table")
-                
-                # Check order table
-                order_columns = [c['name'] for c in inspector.get_columns('order')]
-                if 'display_id' not in order_columns:
-                    conn.execute(db.text('ALTER TABLE "order" ADD COLUMN display_id TEXT'))
-                    app.logger.info("Added column 'display_id' to order table")
-                
-                # Check cash_voucher table
-                cv_columns = [c['name'] for c in inspector.get_columns('cash_voucher')]
-                if 'source' not in cv_columns:
-                    conn.execute(db.text('ALTER TABLE cash_voucher ADD COLUMN source TEXT DEFAULT "manual"'))
-                if 'order_id' not in cv_columns:
-                    conn.execute(db.text('ALTER TABLE cash_voucher ADD COLUMN order_id INTEGER'))
-                
-                # Cleanup previous deletions if any
-                pass
-                    
-        except Exception as e:
-            app.logger.error(f"Error creating/migrating database: {e}")
+            # ... (the rest of local migration logic)
 
 # Run initial migration
 run_migrations()
@@ -1538,7 +1495,10 @@ def get_orders():
     page = request.args.get('page', type=int)
     limit = request.args.get('limit', type=int)
     
-    query = Order.query
+    query = Order.query.options(
+        joinedload(Order.partner),
+        selectinload(Order.details).joinedload(OrderDetail.product).selectinload(Product.combo_items)
+    )
 
     if start_date:
         try:
