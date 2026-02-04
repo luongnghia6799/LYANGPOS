@@ -62,6 +62,11 @@ export default function MobilePOS() {
             setCart(prev => prev.map((item, idx) =>
                 idx === existingIdx ? { ...item, quantity: item.quantity + 1 } : item
             ));
+            // Focus existing
+            setTimeout(() => {
+                cartItemRefs.current[existingIdx]?.focus();
+                cartItemRefs.current[existingIdx]?.select();
+            }, 100);
         } else {
             const newItem = {
                 product_id: product.id,
@@ -70,14 +75,14 @@ export default function MobilePOS() {
                 quantity: 1,
                 unit: product.unit
             };
+            const newIdx = cart.length;
             setCart(prev => [...prev, newItem]);
+            // Focus new
+            setTimeout(() => {
+                cartItemRefs.current[newIdx]?.focus();
+                cartItemRefs.current[newIdx]?.select();
+            }, 100);
         }
-
-        setSearchTerm('');
-        setTimeout(() => {
-            searchInputRef.current?.focus();
-        }, 100);
-
         setToast({ message: `Đã thêm ${product.name}`, type: 'success' });
         setTimeout(() => setToast(null), 1500);
     };

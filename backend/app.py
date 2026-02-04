@@ -1611,7 +1611,7 @@ def get_orders():
     orders = query.all()
     return jsonify([o.to_dict() for o in orders])
 
-@app.route('/api/orders/<int:order_id>/status', methods=['POST', 'PATCH'])
+@app.route('/api/orders/<int:order_id>/status', methods=['PATCH'])
 def update_order_status(order_id):
     order = Order.query.get_or_404(order_id)
     data = request.json

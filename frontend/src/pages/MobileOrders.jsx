@@ -46,7 +46,7 @@ export default function MobileOrders() {
     const handleMarkAsPicked = async () => {
         if (!selectedOrder) return;
         try {
-            await axios.post(`/api/orders/${selectedOrder.id}/status`, { status: 'Completed' });
+            await axios.patch(`/api/orders/${selectedOrder.id}/status`, { status: 'Completed' });
 
             setToast({ message: `Đã soạn xong đơn #${selectedOrder.display_id || selectedOrder.id}`, type: 'success' });
 
